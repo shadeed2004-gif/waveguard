@@ -196,15 +196,15 @@ Once your backend is running with `--host 0.0.0.0 --port 8005` (Option B above),
 
 ### 1. Find your Laptop's IP Address
 Open a new terminal or command prompt and type `ipconfig`.
-Look for **IPv4 Address** (e.g., `192.168.1.19`).
+Look for **IPv4 Address** (e.g., `10.38.178.14`).
 
 ### 2. Update your ESP32 Arduino Code
 In your ESP32 firmware, set the target URL to point to your laptop's IP address and the **8005 port**.
 
 If you are using `http.GET()` in your ESP32 code, the URL structure should look exactly like this:
 ```cpp
-// Replace 192.168.1.19 with YOUR actual IPv4 Address
-String url = "http://192.168.1.19:8005/api/buoy?motion=" + String(avg_motion) + "&speed=" + String(calculated_speed) + "&status=" + status_string;
+// Replace 10.38.178.14 with YOUR actual IPv4 Address
+String url = "http://10.38.178.14:8005/api/buoy?motion=" + String(avg_motion) + "&speed=" + String(calculated_speed) + "&status=" + status_string;
 ```
 
 ### 3. Flash & Verify

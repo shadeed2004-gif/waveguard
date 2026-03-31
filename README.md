@@ -121,8 +121,8 @@ WaveGuard is designed for physical marine deployment. Ensure your ESP32 is flash
 
 **ESP32 C++ Payload Example:**
 ```cpp
-// Replace 192.168.1.19 with the laptop's Wi-Fi IPv4 address
-String url = "http://192.168.1.19:8005/api/buoy?motion=" + String(avg_motion) + "&speed=" + String(calculated_speed) + "&status=" + status_string;
+// Replace 10.38.178.14 with the laptop's Wi-Fi IPv4 address
+String url = "http://10.38.178.14:8005/api/buoy?motion=" + String(avg_motion) + "&speed=" + String(calculated_speed) + "&status=" + status_string;
 http.GET();
 ```
 
