@@ -1,0 +1,23 @@
+# Node
+node_modules/
+dist/
+dist-ssr/
+*.local
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+venv/
+.env
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# Vite / IDE
+.vscode/
+.idea/
+.DS_Store
+*.log
