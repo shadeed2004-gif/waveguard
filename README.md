@@ -86,12 +86,20 @@ WAVEGUARD_ADMIN_PASS=waveguard2024
 ```
 
 ### 2. Launch the Brain (FastAPI Backend)
-**Crucial:** We bind to port `8005` on `0.0.0.0` to allow the physical ESP32 buoy to communicate over the local network.
+There are two ways to run the backend depending on whether you are using the physical ESP32 buoy or just testing the UI simulation locally.
 
+**Option A: Local Simulation Only (No Hardware Required) 💻**
+If you are presenting the interface or testing via API simulation, run this inside your active virtual environment:
 ```powershell
-# Inside the activated virtual environment
+python -m uvicorn main:app --reload --port 8005
+```
+
+**Option B: Physical ESP32 Hardware Mode 🚨**
+If you are actively connecting the ESP32 buoy over Wi-Fi, you **must bind the host to 0.0.0.0** so the backend can accept connections from other devices on your local network:
+```powershell
 python -m uvicorn main:app --reload --host 0.0.0.0 --port 8005
 ```
+
 - **Live API Endpoint**: `http://localhost:8005`
 - **Swagger Documentation**: `http://localhost:8005/docs`
 
