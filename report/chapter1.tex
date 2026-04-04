@@ -1,0 +1,124 @@
+%% chapter1.tex – Introduction
+
+\chapter{Introduction}
+
+\section{Background}
+
+Kerala's 590\,km coastline is home to more than 1.6~million fisherfolk who venture into
+the sea daily for their livelihood.
+The state experiences a phenomenon locally termed \textit{Kallakkadal} (roughly
+``turbulent sea''), a class of destructive long-period swell that propagates from
+distant storms in the Arabian Sea or the Indian Ocean and arrives at the shore without
+any associated local storm activity~\cite{kumar2020kallakkadal}.
+Because no visual cues precede the event, unsuspecting fishing boats and coastal
+residents are caught off guard, leading to capsizings, destruction of boats, and
+loss of life every monsoon season.
+
+Conventional forecasting methods---buoys operated by the National Institute of Ocean
+Technology (NIOT) and satellite-derived wave models---operate at coarse spatial
+and temporal resolution, often failing to capture the hyper-local amplification that
+occurs in shallow near-shore zones of 5--10~m depth.
+Additionally, broadcast alerts via radio or television reach coastal communities with
+insufficient lead time for the most vulnerable zones.
+
+The rapid growth of affordable embedded computing (ESP32, Arduino), MEMS sensors
+(MPU6050), and cellular connectivity (SIM800L/GPRS) makes it feasible to deploy
+low-cost autonomous sensor nodes directly in near-shore waters.
+Combining real-time accelerometry, onboard threshold logic, and dual-path alert
+delivery (WiFi + GSM SMS) can bridge the gap between satellite-scale forecasting and
+individual community-level warning.
+
+\section{Problem Statement}
+
+Despite advances in national-level ocean monitoring, there is a critical absence of
+affordable, deployable near-shore early-warning systems for coastal Kerala.
+Specific gaps include:
+
+\begin{enumerate}[label=\roman*.]
+  \item Lack of real-time, sub-kilometre wave monitoring at shallow-water deployment
+        depths (5--10~m).
+  \item Absence of automatic, multi-channel alert delivery (both internet-connected
+        and offline GSM paths) suited to areas with intermittent connectivity.
+  \item High cost and complexity of commercial buoy systems that render them
+        inaccessible to local panchayat administrations and fishermen's cooperatives.
+  \item No open-source, reproducible firmware and dashboard solution tailored to the
+        \textit{Kallakkadal} threat profile of the Kerala coast.
+\end{enumerate}
+
+\noindent WaveGuard~V4 directly addresses all four gaps.
+
+\section{Objectives}
+
+The primary objectives of the WaveGuard~V4 project are:
+
+\begin{enumerate}
+  \item \textbf{Design} a waterproof IoT buoy that samples tri-axial acceleration at
+        50~Hz using an MPU6050 sensor mounted on an ESP32 DevKit~v1 platform.
+  \item \textbf{Implement} an onboard classification algorithm that categorises sea
+        conditions as \textsc{calm}, \textsc{moderate}, or \textsc{high-wave} based
+        on calibrated RMS acceleration thresholds.
+  \item \textbf{Deliver} real-time alerts simultaneously via a WiFi-connected web
+        dashboard and via GSM SMS through a SIM800L module.
+  \item \textbf{Log} all sensor readings with GPS timestamps to a SQLite database via
+        a FastAPI backend for post-event analysis.
+  \item \textbf{Achieve} a total system cost under \INR{}3\,500 per unit, making
+        community-scale deployment economically viable.
+  \item \textbf{Sustain} continuous operation for 6--8~hours on a single 2\,200~mAh
+        Li-ion cell without solar supplementation.
+\end{enumerate}
+
+\section{Scope}
+
+The present work is scoped as follows:
+
+\begin{itemize}
+  \item \textbf{Deployment zone:} Kanayannur taluk, Ernakulam district, Kerala Coast
+        (approx.\ 10.05\textdegree{}N, 76.18\textdegree{}E), 1~km offshore at
+        5--10~m water depth.
+  \item \textbf{Single-node prototype:} The report documents one physical buoy unit;
+        multi-node mesh networking is deferred to future work.
+  \item \textbf{Wave range:} Typical monsoon swell of 0.5--2~m; extreme events
+        exceeding instrument range are logged as high-wave alerts.
+  \item \textbf{Alert recipients:} Up to 5 pre-configured SMS recipients and any
+        browser-capable device on the local WiFi network.
+  \item \textbf{Software stack:} Arduino~1.8.19 firmware, FastAPI~0.115 backend,
+        React~18 + Vite frontend, SQLite database.
+\end{itemize}
+
+\section{Mapping to Sustainable Development Goals}
+
+WaveGuard~V4 contributes to three United Nations SDGs~\cite{un2015sdgs}:
+
+\begin{description}
+  \item[SDG~11 – Sustainable Cities and Communities]
+        The system provides coastal communities with timely early warnings, directly
+        reducing disaster risk and enhancing community resilience (Target~11.5).
+
+  \item[SDG~13 – Climate Action]
+        By monitoring climate-exacerbated coastal hazards (\textit{Kallakkadal}
+        intensification under global warming), WaveGuard~V4 supports climate
+        adaptation at the local level (Target~13.1).
+
+  \item[SDG~14 – Life Below Water]
+        Real-time wave intelligence helps fisherfolk avoid hazardous conditions,
+        protecting both human lives and the fishing economy that depends on
+        healthy marine ecosystems (Target~14.b).
+\end{description}
+
+\section{Organisation of the Report}
+
+The remainder of this report is organised as follows.
+Chapter~\ref{chap:litsurvey} reviews existing coastal monitoring systems, IoT sensor
+platforms, and early-warning architectures.
+Chapter~\ref{chap:background} provides technical background on the core technologies
+employed.
+Chapter~\ref{chap:requirements} enumerates functional, non-functional, hardware, and
+software requirements.
+Chapter~\ref{chap:design} describes the system design, pin configuration, power
+architecture, and software implementation.
+Chapter~\ref{chap:evaluation} presents the testing methodology and performance metrics.
+Chapter~\ref{chap:results} documents experimental results and observations.
+Chapter~\ref{chap:future} outlines directions for future enhancement.
+Chapter~\ref{chap:conclusion} concludes the report.
+Appendix~\ref{app:firmware} contains the firmware source code, bill of materials, and
+wiring diagram.
