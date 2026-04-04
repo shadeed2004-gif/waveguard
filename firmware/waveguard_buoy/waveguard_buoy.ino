@@ -17,6 +17,17 @@
 
 #include "config.h"
 
+// Compile-time guard: fail if placeholder credentials are still set in config.h.
+// String literal indexing is valid in constexpr contexts (C++11).
+static_assert(
+  !(WIFI_SSID[0] == 'Y' && WIFI_SSID[1] == 'O' && WIFI_SSID[2] == 'U' && WIFI_SSID[3] == 'R'),
+  "config.h: WIFI_SSID is still set to the placeholder. Set your real network SSID."
+);
+static_assert(
+  !(SERVER_IP[0] == 'Y' && SERVER_IP[1] == 'O' && SERVER_IP[2] == 'U' && SERVER_IP[3] == 'R'),
+  "config.h: SERVER_IP is still set to the placeholder. Set your laptop's IPv4 address."
+);
+
 #include <WiFi.h>
 #include <HTTPClient.h>
 #include <Wire.h>
@@ -250,9 +261,14 @@ void setup() {
 #if DEBUG_SERIAL
   Serial.begin(SERIAL_BAUD);
   delay(500);
+  // Fixed-width banner — version and buoy ID are printed on separate lines
+  // so border alignment is not affected by string length changes.
   Serial.println("\n╔══════════════════════════════════════╗");
-  Serial.println("║  WaveGuard Buoy  Firmware v" FIRMWARE_VERSION "   ║");
-  Serial.println("║  Buoy ID: " BUOY_ID "                       ║");
+  Serial.println("║        WaveGuard Buoy Firmware       ║");
+  Serial.print(  "║  Version: "); Serial.print(FIRMWARE_VERSION);
+  Serial.println("                        ║");
+  Serial.print(  "║  Buoy ID: "); Serial.print(BUOY_ID);
+  Serial.println("                       ║");
   Serial.println("╚══════════════════════════════════════╝");
 #endif
 

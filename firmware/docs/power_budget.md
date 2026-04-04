@@ -78,8 +78,9 @@ Average current (GPS included in cycle) = **~118 mA**
 ### Option 1 — Light Sleep Between Readings
 
 Enable ESP32 light sleep during the idle phase (~4.3 s per cycle) to reduce idle
-current from 80 mA to ~1 mA. This requires disabling `--reload` in uvicorn and
-accepting slightly slower reconnect times.
+current from 80 mA to ~1 mA. Note that WiFi is disabled during light sleep and
+must be briefly reinitialised at the start of each transmit cycle, adding ~500 ms
+of reconnect overhead.
 
 Estimated average current reduction: **80 mA → ~20 mA** (WiFi must be briefly
 reinitialised each cycle).

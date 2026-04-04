@@ -256,10 +256,12 @@ For a full step-by-step guide including library installation, see [`firmware/FLA
 5. Click **Upload** (or `Ctrl+U`)
 6. Open Serial Monitor at **115200 baud** to verify output
 
-**Expected Serial output:**
+**Expected Serial output** *(version number may vary)*:
 ```
 ╔══════════════════════════════════════╗
-║  WaveGuard Buoy  Firmware v4.1.0   ║
+║        WaveGuard Buoy Firmware       ║
+║  Version: 4.1.0                        ║
+║  Buoy ID: WG-01                       ║
 ╚══════════════════════════════════════╝
 [WiFi] Connected  IP: 192.168.1.42
 [HTTP] Response code: 200
