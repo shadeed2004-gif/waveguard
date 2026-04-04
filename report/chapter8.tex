@@ -1,0 +1,77 @@
+%% chapter8.tex – Future Scope
+\chapter{Future Scope}
+\label{chap:future}
+
+The WaveGuard~V4 prototype has demonstrated core feasibility.
+The following enhancements are planned for subsequent iterations.
+
+\section{Multi-Buoy Mesh Network}
+
+Deploying a network of 5--10 buoys at 1~km spacing along the Kanayannur coastline
+would enable directional wave propagation tracking.
+ESP32 devices support ESP-NOW (a proprietary peer-to-peer protocol at 1~Mbps),
+allowing inter-buoy communication without a WiFi router.
+A gateway buoy at shore would aggregate all readings before forwarding to the backend.
+
+\section{Machine-Learning Based Anomaly Detection}
+
+The current threshold-based classifier can produce false positives during
+boat-induced wake events that share an RMS footprint similar to swell.
+An LSTM autoencoder trained on labelled wave spectra could distinguish
+\textit{Kallakkadal}-type long-period swell from boat wake using frequency-domain
+features derived from the 50~Hz time series.
+The ESP32's 520~KB RAM is sufficient for inference with TensorFlow Lite for
+Microcontrollers (TFLite-Micro) for models $<$50~KB.
+
+\section{Solar Power Enhancement}
+
+Replacing the single 18650 cell with a 6~V / 3~W solar panel and a 3-cell 18650
+pack managed by a CN3791 MPPT charger would allow indefinite deployment.
+A night-time deep-sleep schedule (ESP32 ULP coprocessor at 10~µA) would further
+reduce average consumption to $<$30~mA, extending useful solar coverage to cloudy days.
+
+\section{Mobile Application}
+
+A React Native mobile app would extend alert delivery beyond SMS to push
+notifications (FCM/APNs), enabling real-time notifications even when cellular SMS
+credits are exhausted.
+The existing FastAPI REST backend requires only a JWT-secured push-token endpoint to
+support mobile clients.
+
+\section{Enhanced Notification Channels}
+
+\begin{itemize}
+  \item \textbf{SMTP email alerts} via GMail OAuth2 API for fisheries department
+        officials.
+  \item \textbf{Telegram Bot API} for community group broadcasts.
+  \item \textbf{WhatsApp Business API} (Twilio/360dialog) for broader reach.
+\end{itemize}
+
+\section{Real-Time Cloud Integration}
+
+Migrating the SQLite backend to a cloud-hosted TimescaleDB (PostgreSQL time-series
+extension) would allow:
+\begin{itemize}
+  \item Multi-buoy data aggregation from a central dashboard.
+  \item Long-term historical analysis for \textit{Kallakkadal} season profiling.
+  \item Public API for research institutions.
+\end{itemize}
+ESP32 cellular data upload via SIM800L TCP/IP stack can replace the shore-based WiFi
+relay, removing the 50~m range constraint.
+
+\section{Advanced Data Visualisation}
+
+A Grafana dashboard connected to TimescaleDB would provide:
+\begin{itemize}
+  \item Heat-map of alert frequency along the 1~km transect.
+  \item Spectral power density plot from FFT of the 50~Hz time series.
+  \item Correlation overlays with Open-Meteo wave height forecast data.
+\end{itemize}
+
+\section{Waterproofing and Buoy Mechanical Redesign}
+
+The current ABS enclosure is tested to IP54; upgrading to a moulded HDPE sphere
+(IP68, 10~m depth rating) with a through-hull cable gland for the GPS antenna would
+support the 5--10~m deployment depth specified in the project brief.
+A gyroscope-stabilised mounting platform inside the sphere would reduce the
+false-positive rate from rotational buoy pitch/roll.

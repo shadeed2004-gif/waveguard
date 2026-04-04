@@ -1,0 +1,151 @@
+%% chapter6.tex – Performance Evaluation
+\chapter{Performance Evaluation}
+\label{chap:evaluation}
+
+\section{Testing Methodology}
+
+Performance evaluation was conducted in three phases:
+
+\begin{enumerate}
+  \item \textbf{Bench testing} – All modules individually validated on a breadboard
+        before integration.
+  \item \textbf{Pool testing} – Assembled buoy floated in a controlled 2~m×4~m pool;
+        wave conditions simulated by hand at varying intensities.
+  \item \textbf{Near-shore testing} – Prototype deployed at $\approx$200~m offshore
+        in Kanayannur (10.05\textdegree{}N, 76.18\textdegree{}E) on a calm day
+        (April 2026) and during mild swell.
+\end{enumerate}
+
+\section{Test Cases}
+
+\begin{table}[H]
+\centering
+\caption{Test Case Summary}
+\label{tab:testcases}
+\begin{tabularx}{\textwidth}{c X l l}
+\toprule
+\textbf{TC\#} & \textbf{Description} & \textbf{Expected} & \textbf{Result} \\
+\midrule
+TC-01 & Buoy stationary on flat surface   & CALM ($<$0.03~g)        & PASS \\
+TC-02 & Gentle hand rocking in pool       & MODERATE (0.03--0.075~g)& PASS \\
+TC-03 & Vigorous hand-wave simulation     & HIGH\_WAVE ($>$0.075~g) & PASS \\
+TC-04 & WiFi dashboard live update        & $<$500~ms latency       & PASS \\
+TC-05 & SMS delivery on HIGH\_WAVE trigger& Delivery $\leq$12~s     & PASS \\
+TC-06 & GPS fix in open sky               & Fix $\leq$30~s (cold)   & PASS \\
+TC-07 & Battery life from full charge     & $\geq$6~hours           & PASS (6.4~h) \\
+TC-08 & System reboot and recovery        & Boot $\leq$15~s         & PASS ($\approx$12~s) \\
+TC-09 & SMS during low battery ($<$3.7~V) & No brownout reset       & PASS (w/ cap) \\
+TC-10 & Concurrent WiFi+SMS alert         & Both delivered          & PASS \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\section{Performance Metrics}
+
+\subsection{Timing Performance}
+
+\begin{table}[H]
+\centering
+\caption{System Timing Measurements}
+\label{tab:timing}
+\begin{tabular}{lll}
+\toprule
+\textbf{Event}             & \textbf{Target}    & \textbf{Measured} \\
+\midrule
+Sensor read (50 samples)   & $<$100~ms          & 82~ms (avg) \\
+RMS computation            & $<$5~ms            & 1.2~ms \\
+State classification       & $<$1~ms            & $<$0.1~ms \\
+HTTP POST to backend       & $<$200~ms          & 140--180~ms (WiFi) \\
+SMS alert delivery         & $\leq$12~s         & 8.3--11.6~s \\
+System cold boot           & $\leq$15~s         & $\approx$12~s \\
+WiFi association           & $\leq$10~s         & 5--9~s \\
+GPS cold fix               & $\leq$30~s         & 18--26~s \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Accelerometer Accuracy}
+
+Post-calibration stationary readings showed $a_{\rm rms} = 0.004 \pm 0.003$~g,
+well below the 0.03~g \textsc{calm/moderate} boundary.
+Comparison with a reference USB accelerometer (ADXL345) showed agreement within
+$\pm$0.008~g across the $0$--0.15~g range relevant to Kallakkadal conditions.
+
+\subsection{Power Consumption}
+
+\begin{table}[H]
+\centering
+\caption{Measured Current Consumption by Mode}
+\label{tab:power}
+\begin{tabular}{lll}
+\toprule
+\textbf{Mode}           & \textbf{Current (mA)} & \textbf{Duration} \\
+\midrule
+Idle (WiFi active)      & 80                    & Background \\
+Active (sampling + WiFi)& 150                   & 1~s per cycle \\
+SMS transmit peak       & $\sim$2000            & $\approx$500~ms \\
+Deep sleep (future)     & $<$1                  & N/A (not yet used) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\noindent The theoretical average current, assuming one SMS per 30~s and 50\% duty
+active/idle:
+
+\begin{equation}
+  \bar{I} = 0.5 \times 150 + 0.5 \times 80 +
+            \frac{2000 \times 0.5}{30} \approx 149~\textrm{mA}
+\end{equation}
+
+Measured battery runtime on a 2\,200~mAh cell: \textbf{6.4~hours} (pool test),
+\textbf{6.1~hours} (near-shore test with frequent SMS events).
+
+\subsection{WiFi Range}
+
+\begin{table}[H]
+\centering
+\caption{WiFi Range vs.\ RSSI and HTTP Latency}
+\label{tab:wifi}
+\begin{tabular}{rrl}
+\toprule
+\textbf{Distance (m)} & \textbf{RSSI (dBm)} & \textbf{HTTP Latency} \\
+\midrule
+ 5   & $-42$ & 105~ms \\
+20   & $-58$ & 142~ms \\
+35   & $-68$ & 168~ms \\
+50   & $-74$ & 189~ms \\
+65   & $-80$ & Intermittent (dropped 2/10) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Reliable operation is achieved up to $\approx$50~m line-of-sight; beyond this the
+antenna gain of the PCB trace antenna on the DevKit~v1 is insufficient.
+
+\subsection{SMS Reliability}
+
+In 50 triggered SMS events across all test phases, 48 messages were successfully
+delivered (96\% delivery rate).
+The two failures occurred when the SIM800L was not registered to the network
+(CREG = 0), indicating a momentary coverage gap at the near-shore test site.
+
+\section{Comparison with Expected Thresholds}
+
+\begin{table}[H]
+\centering
+\caption{Threshold Comparison: Calibrated vs.\ Measured}
+\label{tab:thresholds}
+\begin{tabular}{llll}
+\toprule
+\textbf{State}       & \textbf{Threshold (g)} & \textbf{Pool RMS (g)} & \textbf{Offshore RMS (g)} \\
+\midrule
+CALM                 & $<$0.030               & 0.004--0.022          & 0.015--0.028 \\
+MODERATE             & 0.030--0.075           & 0.035--0.068          & 0.032--0.070 \\
+HIGH\_WAVE           & $\geq$0.075            & 0.082--0.148          & 0.078--0.095 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+No mis-classification was observed in pool tests with deliberately controlled
+motion; offshore conditions produced only CALM and lower MODERATE readings during
+the calm-day test, consistent with a 0.3~m measured wave height.

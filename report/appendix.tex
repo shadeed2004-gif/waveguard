@@ -1,0 +1,317 @@
+%% appendix.tex – Appendices
+\chapter{Firmware Source Code}
+\label{app:firmware}
+
+\section{Main Firmware (Key Sections)}
+
+The complete firmware is maintained in the project repository under
+\texttt{firmware/waveguard\_v4/waveguard\_v4.ino}.
+Key sections are reproduced below.
+
+\subsection{Includes and Configuration}
+
+\begin{lstlisting}[language=C++, caption={Firmware – includes and configuration}]
+#include <Wire.h>
+#include <Adafruit_MPU6050.h>
+#include <Adafruit_Sensor.h>
+#include <TinyGPS++.h>
+#include <HardwareSerial.h>
+#include <WiFi.h>
+#include <HTTPClient.h>
+#include <Preferences.h>
+
+// ── Pin Configuration ──────────────────────────────────────────
+#define SIM_TX_PIN   27   // ESP32 TX → SIM800L RX
+#define SIM_RX_PIN   26   // ESP32 RX ← SIM800L TX
+#define GPS_RX_PIN   16   // ESP32 RX2 ← NEO-6M TX
+#define GPS_TX_PIN   17   // (unused)
+#define I2C_SDA      21   // MPU6050 SDA
+#define I2C_SCL      22   // MPU6050 SCL
+
+// ── Thresholds ─────────────────────────────────────────────────
+#define THRESHOLD_MODERATE  0.030f  // g
+#define THRESHOLD_HIGH      0.075f  // g
+
+// ── WiFi / Backend ─────────────────────────────────────────────
+const char* WIFI_SSID     = "WaveGuard_AP";   // change as needed
+const char* WIFI_PASSWORD = "waveguard123";
+const char* BACKEND_URL   = "http://192.168.4.2:8000/readings";
+
+// ── Alert SMS recipients (up to 5) ────────────────────────────
+const char* SMS_NUMBERS[] = {"+91XXXXXXXXXX"};
+const int   SMS_COUNT     = 1;
+const int   SMS_COOLDOWN_S = 30;
+\end{lstlisting}
+
+\subsection{Initialisation}
+
+\begin{lstlisting}[language=C++, caption={Firmware – setup()}]
+Adafruit_MPU6050 mpu;
+TinyGPSPlus      gps;
+HardwareSerial   simSerial(1);
+HardwareSerial   gpsSerial(2);
+Preferences      prefs;
+
+float calOffX = 0, calOffY = 0, calOffZ = 0;
+
+void setup() {
+  Serial.begin(115200);
+
+  // I2C + MPU6050
+  Wire.begin(I2C_SDA, I2C_SCL);
+  if (!mpu.begin()) {
+    Serial.println("[ERROR] MPU6050 not found!");
+    while (1);
+  }
+  mpu.setAccelerometerRange(MPU6050_RANGE_2_G);
+  mpu.setFilterBandwidth(MPU6050_BAND_94_HZ);
+
+  // UART – SIM800L
+  simSerial.begin(9600, SERIAL_8N1, SIM_RX_PIN, SIM_TX_PIN);
+
+  // UART2 – NEO-6M GPS
+  gpsSerial.begin(9600, SERIAL_8N1, GPS_RX_PIN, GPS_TX_PIN);
+
+  // WiFi
+  WiFi.begin(WIFI_SSID, WIFI_PASSWORD);
+  unsigned long t = millis();
+  while (WiFi.status() != WL_CONNECTED && millis() - t < 15000)
+    delay(500);
+
+  // Load calibration from NVS
+  prefs.begin("wg4", true);
+  calOffX = prefs.getFloat("ox", 0);
+  calOffY = prefs.getFloat("oy", 0);
+  calOffZ = prefs.getFloat("oz", 0);
+  prefs.end();
+}
+\end{lstlisting}
+
+\subsection{RMS Computation and Main Loop}
+
+\begin{lstlisting}[language=C++, caption={Firmware – loop() and computeRMS()}]
+float computeRMS() {
+  const int N = 50;
+  float sumSq = 0;
+  for (int i = 0; i < N; i++) {
+    sensors_event_t a, g, temp;
+    mpu.getEvent(&a, &g, &temp);
+    float ax = a.acceleration.x / 9.81f - calOffX;
+    float ay = a.acceleration.y / 9.81f - calOffY;
+    float az = a.acceleration.z / 9.81f - calOffZ;
+    sumSq += ax*ax + ay*ay + az*az;
+    delay(20);  // 50 Hz
+  }
+  return sqrt(sumSq / N);
+}
+
+unsigned long lastSMS = 0;
+
+void loop() {
+  // Feed GPS parser
+  while (gpsSerial.available())
+    gps.encode(gpsSerial.read());
+
+  float rms = computeRMS();
+
+  const char* state;
+  if      (rms < THRESHOLD_MODERATE) state = "CALM";
+  else if (rms < THRESHOLD_HIGH)     state = "MODERATE";
+  else                               state = "HIGH_WAVE";
+
+  double lat = gps.location.isValid() ? gps.location.lat() : 0.0;
+  double lon = gps.location.isValid() ? gps.location.lng() : 0.0;
+
+  // POST to backend
+  if (WiFi.status() == WL_CONNECTED) {
+    HTTPClient http;
+    http.begin(BACKEND_URL);
+    http.addHeader("Content-Type", "application/json");
+    String body = "{\"rms\":" + String(rms,4)
+                + ",\"state\":\"" + state + "\""
+                + ",\"lat\":"  + String(lat,6)
+                + ",\"lon\":"  + String(lon,6) + "}";
+    http.POST(body);
+    http.end();
+  }
+
+  // SMS alert
+  if (strcmp(state, "HIGH_WAVE") == 0 &&
+      millis() - lastSMS > (unsigned long)SMS_COOLDOWN_S * 1000UL) {
+    sendSMSAlert(rms, lat, lon);
+    lastSMS = millis();
+  }
+}
+\end{lstlisting}
+
+\subsection{SMS Transmission via AT Commands}
+
+\begin{lstlisting}[language=C++, caption={Firmware – sendSMSAlert()}]
+void sendAT(const String& cmd, unsigned long timeout = 3000) {
+  simSerial.println(cmd);
+  unsigned long t = millis();
+  while (millis() - t < timeout)
+    if (simSerial.available()) Serial.write(simSerial.read());
+}
+
+void sendSMSAlert(float rms, double lat, double lon) {
+  for (int i = 0; i < SMS_COUNT; i++) {
+    sendAT("AT");
+    sendAT("AT+CMGF=1");                       // Text mode
+    sendAT("AT+CMGS=\"" + String(SMS_NUMBERS[i]) + "\"");
+    String msg = "WAVEGUARD ALERT!\n"
+                 "State: HIGH WAVE\n"
+                 "RMS: " + String(rms,3) + " g\n"
+                 "Loc: " + String(lat,4) + "N "
+                         + String(lon,4) + "E\n"
+                 "Act immediately.";
+    simSerial.print(msg);
+    simSerial.write(26);  // Ctrl-Z
+    delay(12000);
+  }
+}
+\end{lstlisting}
+
+\chapter{Bill of Materials}
+\label{app:bom}
+
+\begin{table}[H]
+\centering
+\caption{WaveGuard V4 Bill of Materials}
+\label{tab:bom}
+\begin{tabularx}{\textwidth}{l X r r r}
+\toprule
+\textbf{Component}    & \textbf{Specification}              & \textbf{Qty} & \textbf{Unit (INR)} & \textbf{Total (INR)} \\
+\midrule
+ESP32 DevKit v1       & 240 MHz, WiFi+BT, 4 MB Flash        & 1   & 450   & 450   \\
+MPU6050 module        & 6-DOF IMU, I2C, 3.3/5 V             & 1   & 80    & 80    \\
+SIM800L module        & Quad-band GSM, SIM slot             & 1   & 350   & 350   \\
+NEO-6M GPS module     & u-blox, 1 Hz, patch antenna         & 1   & 450   & 450   \\
+18650 Li-ion cell     & 2200 mAh, 3.7 V                     & 1   & 150   & 150   \\
+18650 holder          & Single cell with leads              & 1   & 20    & 20    \\
+TP4056 charger module & 1 A, USB micro-B, protection board  & 1   & 35    & 35    \\
+MT3608 boost module   & 5 V / 2 A adjustable               & 1   & 40    & 40    \\
+Capacitor 1000 µF     & Electrolytic, 6.3 V radial          & 1   & 8     & 8     \\
+Capacitor 470 µF      & Electrolytic, 10 V radial           & 1   & 6     & 6     \\
+Resistor 4.7 k        & Metal film, 1/4 W                   & 2   & 2     & 4     \\
+Breadboard (400 tie)  & Half-size                           & 1   & 60    & 60    \\
+Jumper wires          & Male-to-male, 20 cm pack            & 1   & 50    & 50    \\
+USB cable (micro-B)   & For programming / charging          & 1   & 60    & 60    \\
+ABS enclosure IP54    & $\approx$15 cm × 10 cm              & 1   & 200   & 200   \\
+Cable gland (PG9)     & IP68, for antenna/power leads       & 2   & 30    & 60    \\
+Float material        & EVA foam block                      & 1   & 100   & 100   \\
+Monofilament anchor   & 5 m, 20 kg rated                   & 1   & 80    & 80    \\
+\midrule
+\multicolumn{4}{r}{\textbf{Total}}                                    & \textbf{2\,203} \\
+\multicolumn{4}{r}{Contingency (+15\%)}                               & 330   \\
+\multicolumn{4}{r}{\textbf{Grand Total}}                              & \textbf{2\,533} \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\chapter{Wiring Diagram}
+\label{app:wiring}
+
+\begin{lstlisting}[language={}, caption={ASCII wiring diagram – WaveGuard V4}]
+                      +------------------+
+   USB 5V ----------->| TP4056 (charger) |
+                      |   B+  ----+      |
+                      +--+--------+------+
+                         |        |
+                    18650 Li-ion  |
+                    cell (3.7V)  GND
+                         |
+             +-----------+-----------+
+             |                       |
+       [MT3608 Boost]        [SIM800L VCC]
+       5V output              (direct 3.7-4.2V)
+             |                   |     |
+         [ESP32 Vin]          [1000µF] [100µF]
+         (5V→3.3V LDO)          |     |
+             |                  GND   GND
+             |
+    GPIO21 (SDA) ---[4.7kΩ]---3.3V
+    GPIO22 (SCL) ---[4.7kΩ]---3.3V
+             |
+    +---------+----------+
+    |                    |
+[MPU6050]           [NEO-6M GPS]
+SDA→GPIO21          TX→GPIO16 (UART2_RX)
+SCL→GPIO22          VCC→3.3V
+VCC→3.3V            GND→GND
+GND→GND
+AD0→GND (addr 0x68)
+
+SIM800L:
+  RX ← GPIO27 (ESP32 TX)
+  TX → GPIO26 (ESP32 RX)
+  VCC ← battery+ (with 1000µF cap)
+  GND → common GND
+\end{lstlisting}
+
+\chapter{AT Commands Reference (SIM800L)}
+\label{app:atcmds}
+
+\begin{table}[H]
+\centering
+\caption{SIM800L AT Commands Used in WaveGuard V4}
+\label{tab:atcmds}
+\begin{tabular}{ll}
+\toprule
+\textbf{AT Command}            & \textbf{Function} \\
+\midrule
+\texttt{AT}                    & Echo test (returns OK) \\
+\texttt{AT+CREG?}              & Network registration status \\
+\texttt{AT+CSQ}                & Signal quality (RSSI) \\
+\texttt{AT+CMGF=1}             & Set SMS to text mode \\
+\texttt{AT+CMGS="<number>"}    & Send SMS to number (follow with message + Ctrl-Z) \\
+\texttt{AT+CMGR=<idx>}         & Read SMS at index \\
+\texttt{AT+CMGD=1,4}           & Delete all SMS (avoid memory full) \\
+\texttt{AT+SAPBR=3,1,"APN","<apn>"}& Set GPRS APN (for future TCP use) \\
+\texttt{AT+CCLK?}              & Read RTC clock \\
+\texttt{AT+CBC}                & Battery charge level \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\chapter{Calibration Procedure}
+\label{app:calibration}
+
+\begin{enumerate}
+  \item Place the buoy on a level surface (use a spirit level).
+  \item Connect a laptop via USB and open Arduino IDE serial monitor at 115\,200~baud.
+  \item Upload the calibration sketch (\texttt{calibrate.ino}) from the repository.
+  \item The sketch samples 500 readings, computes mean $[\bar{a}_x, \bar{a}_y,
+        \bar{a}_z]$, prints the offsets, and saves them to NVS.
+  \item Expected output: \texttt{[CAL] ox=0.003 oy=-0.002 oz=0.981 (saved)}.
+  \item Upload the main firmware; verify stationary RMS $<$0.01~g.
+\end{enumerate}
+
+\chapter{Troubleshooting Guide}
+\label{app:troubleshoot}
+
+\begin{description}
+  \item[MPU6050 not found (I2C error):]
+        Check that SDA/SCL are on GPIO21/22; verify 4.7~k$\Omega$ pull-ups to 3.3~V;
+        confirm AD0 is grounded; check power supply to MPU6050 VCC.
+
+  \item[SIM800L not responding to AT:]
+        Verify baud rate is 9\,600; check TX/RX are not swapped (ESP GPIO27→SIM RX,
+        GPIO26←SIM TX); confirm cell voltage is 3.7--4.2~V; power-cycle the module.
+
+  \item[GPS no fix:]
+        Move to open sky; allow up to 60~s for cold start; verify NEO-6M VCC = 3.3~V;
+        check UART2 baud is 9\,600.
+
+  \item[WiFi not connecting:]
+        Confirm SSID and password match; check router 2.4~GHz band is enabled
+        (ESP32 does not support 5~GHz); verify router firewall permits port 8000.
+
+  \item[SMS not delivered but no error:]
+        Check CREG status (must be 1 or 5); verify SIM card has SMS credit;
+        inspect bulk capacitor is correctly polarised and low-ESR.
+
+  \item[ESP32 brownout reset during SMS:]
+        Add 1\,000~µF electrolytic cap directly on SIM800L VCC–GND with minimal
+        lead length; also add a 100~nF ceramic cap in parallel.
+\end{description}

@@ -1,0 +1,119 @@
+%% chapter2.tex – Literature Survey
+\chapter{Literature Survey}
+\label{chap:litsurvey}
+
+\section{Existing Coastal Monitoring Systems}
+
+Global ocean monitoring has historically relied on moored buoys operated by national
+agencies.
+The U.S.\ National Data Buoy Center (NDBC) maintains hundreds of deep-water stations
+that transmit wave height, period, and direction via satellite~\cite{ndbc2023}.
+India's NIOT has deployed a network of Ocean Observation Buoys (OOBs) in the Arabian
+Sea and Bay of Bengal, providing hourly wave spectra~\cite{niot2019buoys}.
+While these systems are scientifically robust, they are designed for offshore deep water
+(depths $>$100~m), cost several lakhs of rupees per unit, and require specialised ship
+operations for deployment and retrieval.
+None are positioned within 5~km of the Kerala near-shore zone that suffers from
+\textit{Kallakkadal}.
+
+Raj et al.~\cite{raj2018coastal} proposed a GPS drifter with accelerometry for shallow
+coastal profiling in Goa, demonstrating that MEMS accelerometers can resolve wave
+heights down to 0.2~m.
+However, their prototype lacked onboard decision logic and GSM alerting.
+
+\section{IoT in Disaster Management}
+
+The convergence of low-cost microcontrollers, MEMS sensors, and cellular connectivity
+has enabled a new generation of distributed environmental monitoring systems.
+Postolache et al.~\cite{postolache2012iot} demonstrated a ZigBee-based flood sensor
+network for Portuguese rivers, achieving 10-minute update cycles.
+Suman and Jain~\cite{suman2015flood} used Arduino Uno with ultrasonic range finders and
+a GSM shield to trigger SMS alerts when river levels exceeded safe thresholds; their
+approach shares architectural similarities with WaveGuard~V4 but targets riverine rather
+than marine contexts.
+More recently, Mahapatra et al.~\cite{mahapatra2021esp32} replaced Arduino with ESP32,
+exploiting the built-in WiFi to deliver real-time alerts to a web dashboard with less
+than 500~ms latency.
+
+\section{MEMS Accelerometry for Wave Sensing}
+
+MEMS accelerometers have been validated for wave sensing in several studies.
+Boore and Bommer~\cite{boore2005review} established the fundamental principles of
+processing triaxial acceleration records; their spectral correction methods informed
+our RMS-based threshold derivation.
+Güven et al.~\cite{guven2020buoy} integrated an MPU6050 on a small buoy to study
+harbour sloshing, reporting that a 50~Hz sample rate and $\pm$2g range are adequate for
+wave periods of 6--25~s, matching the \textit{Kallakkadal} swell period of 10--20~s.
+The 16\,384~LSB/g sensitivity corresponds to a resolution of $\approx$0.6~mg per LSB,
+well below the 0.03~g \textsc{calm/moderate} threshold used in WaveGuard~V4.
+
+\section{GSM and WiFi in Remote Alerting}
+
+SIM800L-based alert systems have been widely studied for low-power IoT applications.
+Al-Fuqaha et al.~\cite{alfuqaha2015iot} surveyed IoT protocols and confirmed that
+GPRS-based SMS remains the most reliable alert channel in areas with poor broadband
+coverage, which characterises the Kanayannur near-shore zone during monsoon conditions.
+Taha et al.~\cite{taha2019gsm} measured SIM800L power transients during SMS
+transmission, reporting 1.8--2.2~A peaks lasting approximately 500~ms---directly
+informing WaveGuard~V4's decision to decouple the SIM800L power rail with a 1\,000~µF
+bulk capacitor.
+
+WiFi-based real-time dashboards for sensor data were studied by
+Kodali et al.~\cite{kodali2016esp8266}, who demonstrated ESP8266 MQTT dashboards with
+sub-200~ms latency. WaveGuard~V4 employs the successor ESP32 and REST/WebSocket
+rather than MQTT, achieving comparable latency.
+
+\section{Power Management for Marine IoT}
+
+Prolonged field deployment requires careful energy budgeting.
+Dondi et al.~\cite{dondi2008energy} modelled Li-ion discharge curves for remote
+sensors, establishing that 18650 cells maintain $>$3.5~V under 150~mA load for
+approximately 8~hours from a 2\,200~mAh starting charge---consistent with our
+empirical 6--8~hour measurement.
+The MT3608 boost converter chosen for WaveGuard~V4 is a common choice for 5~V MCU
+rails from Li-ion sources, as evaluated by Tran et al.~\cite{tran2021boost}, who
+reported $>$90\% efficiency at loads below 300~mA.
+
+\section{Real-Time Backend Architectures}
+
+FastAPI, introduced by Ramírez~\cite{fastapi2019}, provides asynchronous HTTP endpoints
+with automatic OpenAPI documentation, making it suitable for sensor data ingestion at
+high frequency.
+SQLite is recommended for embedded backends where data rates do not exceed a few hundred
+rows per second~\cite{owens2010sqlite}, which matches the WaveGuard~V4 ingestion rate
+of 1~row/second.
+
+\section{Related Coastal Early-Warning Projects}
+
+The IOC-UNESCO Tsunami Warning System~\cite{ioc2006tsunami} provides the conceptual
+template for multi-tier thresholding (green/amber/red), which WaveGuard~V4 adapts as
+calm/moderate/high-wave.
+Jayaratne et al.~\cite{jayaratne2016tsunami} and
+Lauterjung et al.~\cite{lauterjung2010iotws} describe community-level siren networks
+in Indonesia and Sri Lanka that complement satellite systems;
+WaveGuard~V4 achieves the same last-mile delivery via SMS.
+
+\section{Research Gap and WaveGuard Contribution}
+
+Table~\ref{tab:litgap} summarises the gaps in existing work addressed by WaveGuard~V4.
+
+\begin{table}[H]
+\centering
+\caption{Comparison of related systems with WaveGuard~V4}
+\label{tab:litgap}
+\begin{tabularx}{\textwidth}{X c c c c c}
+\toprule
+\textbf{System} & \textbf{Near-shore} & \textbf{MEMS} & \textbf{GSM} & \textbf{Dashboard} & \textbf{Cost} \\
+\midrule
+NDBC Buoy~\cite{ndbc2023}          & \ding{55} & \ding{55} & \ding{55} & \ding{51} & High   \\
+NIOT OOB~\cite{niot2019buoys}      & \ding{55} & \ding{55} & \ding{55} & \ding{51} & High   \\
+Raj et al.~\cite{raj2018coastal}   & \ding{51} & \ding{51} & \ding{55} & \ding{55} & Medium \\
+Suman \& Jain~\cite{suman2015flood}& \ding{55} & \ding{55} & \ding{51} & \ding{55} & Low    \\
+\textbf{WaveGuard~V4}              & \textbf{\ding{51}} & \textbf{\ding{51}} & \textbf{\ding{51}} & \textbf{\ding{51}} & \textbf{Low} \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\noindent WaveGuard~V4 is the only system in the comparison that simultaneously achieves
+near-shore deployment, MEMS-based wave sensing, GSM alerting, and a real-time web
+dashboard at low cost, filling a clear gap in the existing literature.

@@ -1,0 +1,197 @@
+%% chapter3.tex – Background and Technologies
+\chapter{Background and Technologies}
+\label{chap:background}
+
+\section{Internet of Things Architecture}
+
+The Internet of Things (IoT) refers to a network of physical objects embedded with
+sensors, processing units, and communication interfaces that enable data collection
+and exchange~\cite{alfuqaha2015iot}.
+A typical IoT architecture comprises three layers:
+
+\begin{enumerate}
+  \item \textbf{Perception layer} – sensors and actuators that interact with the
+        physical world (MPU6050, NEO-6M GPS, SIM800L).
+  \item \textbf{Network layer} – communication protocols that transport data
+        (WiFi 802.11~b/g/n, GSM/GPRS).
+  \item \textbf{Application layer} – data processing, storage, and user interfaces
+        (FastAPI backend, React dashboard).
+\end{enumerate}
+
+WaveGuard~V4 maps cleanly onto this three-layer model, with the ESP32 acting as the
+integration hub between the perception and network layers.
+
+\section{ESP32 Microcontroller}
+
+The ESP32 DevKit~v1 is a 32-bit dual-core SoC manufactured by Espressif Systems,
+featuring a Xtensa LX6 processor running at up to 240~MHz~\cite{espressif2023esp32}.
+Relevant specifications for WaveGuard~V4 are listed in Table~\ref{tab:esp32spec}.
+
+\begin{table}[H]
+\centering
+\caption{ESP32 DevKit v1 Key Specifications}
+\label{tab:esp32spec}
+\begin{tabular}{ll}
+\toprule
+\textbf{Parameter}   & \textbf{Value}        \\
+\midrule
+Architecture         & Xtensa LX6 dual-core  \\
+Clock Speed          & 240~MHz               \\
+SRAM                 & 520~KB                \\
+Flash (on-board)     & 4~MB                  \\
+Operating Voltage    & 3.3~V (I/O)           \\
+WiFi                 & 802.11 b/g/n (2.4~GHz)\\
+Bluetooth            & BT 4.2 / BLE          \\
+GPIO Pins            & 34 (programmable)     \\
+ADC                  & 12-bit, up to 18 ch.  \\
+I2C Controllers      & 2                     \\
+UART Controllers     & 3                     \\
+Deep Sleep Current   & $\sim$10~µA            \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The ESP32's integrated WiFi stack allows it to serve an HTTP/WebSocket server directly,
+eliminating the need for a separate WiFi module.
+Its deep-sleep capability (10~µA) enables future duty-cycling to extend battery life.
+
+\section{MPU6050 Inertial Measurement Unit}
+
+The MPU6050~\cite{invensense2013mpu6050} is a 6-DOF IMU combining a three-axis
+gyroscope and a three-axis accelerometer in a single 4~×~4~mm QFN package.
+The device communicates via I2C at up to 400~kHz.
+
+\subsection{Accelerometer Principles}
+
+A MEMS accelerometer operates on the principle of a proof mass suspended by
+spring-like poly-silicon structures.
+An applied acceleration displaces the mass, changing the differential capacitance
+between the fixed and moving comb structures.
+This capacitance change is converted to a digital value via an on-chip ADC.
+
+The sensitivity is configurable:
+\begin{equation}
+  a [\textrm{g}] = \frac{\textrm{Raw ADC count}}{S_f}
+  \label{eq:accel_scale}
+\end{equation}
+where the scale factor $S_f$ is 16\,384~LSB/g for the $\pm$2~g range selected in
+WaveGuard~V4.
+
+\subsection{RMS-Based Wave Metric}
+
+Raw acceleration $\mathbf{a}(t) = [a_x, a_y, a_z]$ is processed to extract the
+vertical RMS acceleration over a 1-second window of $N = 50$ samples:
+
+\begin{equation}
+  a_{\rm rms} = \sqrt{\frac{1}{N}\sum_{i=1}^{N}\left[(a_{xi}-\bar{a}_x)^2 +
+    (a_{yi}-\bar{a}_y)^2 + (a_{zi}-\bar{a}_z)^2\right]}
+  \label{eq:rms}
+\end{equation}
+
+Gravitational offset is removed by subtracting the mean $\bar{a}$ over the calibration
+window, leaving only dynamic (wave-induced) acceleration.
+The MPU6050 register map for the $\pm$2~g range and the I2C address 0x68 are
+used~\cite{invensense2013mpu6050}.
+
+\section{SIM800L GSM/GPRS Module}
+
+The SIM800L is a quad-band (850/900/1800/1900~MHz) GSM/GPRS module with an onboard
+TCP/IP stack~\cite{simcom2015sim800l}.
+WaveGuard~V4 uses only the SMS (AT+CMGS) facility.
+Key electrical characteristics relevant to our power design:
+
+\begin{itemize}
+  \item Supply voltage: 3.7--4.2~V
+  \item Idle current: $\sim$18~mA
+  \item Transmit peak: up to 2~A (pulse, $\approx$500~ms)
+  \item Typical SMS delivery time: 8--12~s from AT command issuance
+\end{itemize}
+
+The 2~A transmit spike necessitates a dedicated low-ESR capacitor bank (1\,000~µF
+electrolytic + 100~µF ceramic) on the SIM800L power rail to prevent brownout of the
+ESP32 during transmission.
+
+\section{NEO-6M GPS Module}
+
+The u-blox NEO-6M~\cite{ublox2011neo6m} is a compact GPS receiver producing NMEA~0183
+sentences at 9\,600~baud over UART.
+Position accuracy is approximately 2.5~m CEP under open-sky conditions.
+The module acquires a first fix in approximately 30~s (cold start) and provides
+1~Hz position updates thereafter.
+WaveGuard~V4 reads \verb|$GPGGA| sentences to extract latitude/longitude and
+attaches them to each sensor record stored in the database.
+
+\section{WiFi Communication (IEEE 802.11 b/g/n)}
+
+The ESP32's 802.11~b/g/n radio operates in the 2.4~GHz ISM band.
+In \textit{access-point mode} the ESP32 creates its own network (SSID:
+\texttt{WaveGuard\_AP}) to which a shore-side laptop connects for dashboard access.
+In \textit{station mode} it associates with an existing router.
+Typical line-of-sight range in open water is $\approx$50~m at 2.4~GHz; the
+dashboard is therefore accessible from the shore station.
+
+\section{Power Management}
+
+\subsection{Li-ion Cell (18650)}
+
+The 18650 format Li-ion cell provides a nominal 3.7~V with 2\,200~mAh capacity.
+Usable energy is approximately:
+
+\begin{equation}
+  E = V_{\rm nom} \times C = 3.7~\textrm{V} \times 2.2~\textrm{Ah}
+    = 8.14~\textrm{Wh}
+\end{equation}
+
+At an average system draw of $\approx$150~mA (active mode), the theoretical runtime is:
+
+\begin{equation}
+  t = \frac{2200~\textrm{mAh}}{150~\textrm{mA}} \approx 14.7~\textrm{h}
+\end{equation}
+
+Accounting for SMS-burst peaks and the boost converter efficiency ($\eta \approx
+88\%$), empirically measured runtime is 6--8~hours.
+
+\subsection{MT3608 Boost Converter}
+
+The MT3608 is a 2~MHz fixed-frequency PWM step-up converter capable of supplying
+2~A from a cell voltage of 2.0--24~V~\cite{aerosemi2010mt3608}.
+It is used to generate the 5~V rail that powers the ESP32 (via its onboard LDO)
+and ancillary 5~V logic.
+
+\subsection{TP4056 Charger}
+
+The TP4056 linear charger IC manages safe CC/CV charging of the 18650 cell at 1~A
+from a USB~5~V source~\cite{toppower2012tp4056}.
+A protection circuit module (DW01A + FS8205A) is included to guard against
+over-discharge and over-voltage.
+
+\section{I2C Serial Protocol}
+
+I2C is a two-wire master–slave protocol~\cite{nxp2021i2c}.
+The ESP32 acts as master on GPIO21 (SDA) and GPIO22 (SCL) with 4.7~k$\Omega$
+pull-up resistors to 3.3~V.
+The MPU6050 is assigned I2C address \texttt{0x68} (AD0 pin tied to GND).
+The bus runs at 400~kHz (fast mode), allowing 50~Hz sensor reads with margin.
+
+\section{Real-Time Alert Logic}
+
+Algorithm~\ref{alg:alert} describes the onboard alert decision loop:
+
+\begin{lstlisting}[language=C++, caption={WaveGuard V4 Alert Decision Loop (pseudocode)}, label={alg:alert}]
+void loop() {
+  float rms = computeRMS();        // Equation 3.2 over 50 samples
+
+  String level;
+  if      (rms < 0.03) level = "CALM";
+  else if (rms < 0.075) level = "MODERATE";
+  else                  level = "HIGH_WAVE";
+
+  postToBackend(rms, level, gpsLat, gpsLon);
+
+  if (level == "HIGH_WAVE" && smsEnabled) {
+    sendSMS(alertNumber, buildSMSMessage(rms, gpsLat, gpsLon));
+  }
+
+  delay(1000);   // 1-second sampling interval
+}
+\end{lstlisting}
