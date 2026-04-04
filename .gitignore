@@ -21,3 +21,15 @@ venv/
 .idea/
 .DS_Store
 *.log
+
+# Firmware — Arduino build artifacts
+firmware/waveguard_buoy/build/
+firmware/waveguard_buoy/.arduino*/
+firmware/**/*.elf
+firmware/**/*.bin
+firmware/**/*.map
+firmware/**/*.hex
+
+# Firmware — sensitive credentials (keep config.h template, exclude local copies)
+# If you copy config.h to a local-only version, add that pattern here:
+# firmware/config.local.h

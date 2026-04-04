@@ -15,10 +15,12 @@ Before you begin, make sure you have the following installed on your system:
 | **Node.js**| 18 or higher     | `node --version`     | https://nodejs.org/                    |
 | **npm**    | 9 or higher      | `npm --version`      | (comes with Node.js)                   |
 | **pip**    | 21 or higher     | `pip --version`      | (comes with Python)                    |
+| **Arduino IDE** | 2.x (firmware only) | — | https://www.arduino.cc/en/software |
 
 > [!NOTE]
 > On Windows, use **PowerShell** or **Command Prompt** for all commands.
 > On macOS/Linux, use your default **Terminal**.
+> Arduino IDE is only required if you are flashing the ESP32 buoy.
 
 ---
 
@@ -26,6 +28,16 @@ Before you begin, make sure you have the following installed on your system:
 
 ```
 waveguardV4/
+├── firmware/                   ← ESP32 Arduino firmware
+│   ├── config.h                ← Central config (WiFi, API, pins, thresholds)
+│   ├── waveguard_buoy/
+│   │   └── waveguard_buoy.ino  ← Main sketch (v4.1.0)
+│   ├── docs/
+│   │   ├── pinout.md           ← GPIO wiring diagram
+│   │   └── power_budget.md     ← Battery life analysis
+│   ├── README.md               ← Firmware overview
+│   └── FLASHING.md             ← Arduino IDE flashing guide
+│
 ├── backend/                    ← Python FastAPI server
 │   ├── main.py                 ← Main application (endpoints & logic)
 │   ├── database.py             ← SQLAlchemy database connection
@@ -214,6 +226,46 @@ String url = "http://10.38.178.14:8005/api/buoy?motion=" + String(avg_motion) + 
 4. When the ESP32 transmits, you will see an `HTTP Response Code: 200`.
 
 **The moment the ESP32 successfully sends data, the WaveGuard React Dashboard will automatically update!**
+
+---
+
+## 🔌 Flashing the ESP32 Buoy Firmware
+
+For a full step-by-step guide including library installation, see [`firmware/FLASHING.md`](firmware/FLASHING.md).
+
+### Quick Reference
+
+**Prerequisites:**
+- Arduino IDE 2.x — https://www.arduino.cc/en/software
+- ESP32 board package installed in Arduino IDE
+- Libraries: Adafruit MPU6050, Adafruit Unified Sensor, Adafruit BusIO
+
+**Configuration (`firmware/config.h`):**
+```cpp
+#define WIFI_SSID        "YourNetworkName"
+#define WIFI_PASSWORD    "YourNetworkPassword"
+#define SERVER_IP        "192.168.1.100"   // your laptop's IPv4 address
+#define SERVER_PORT      8005
+```
+
+**Steps:**
+1. Open `firmware/waveguard_buoy/waveguard_buoy.ino` in Arduino IDE
+2. Edit `firmware/config.h` with your WiFi and server settings
+3. Select **Tools → Board → ESP32 Dev Module**
+4. Select the correct **Tools → Port**
+5. Click **Upload** (or `Ctrl+U`)
+6. Open Serial Monitor at **115200 baud** to verify output
+
+**Expected Serial output:**
+```
+╔══════════════════════════════════════╗
+║  WaveGuard Buoy  Firmware v4.1.0   ║
+╚══════════════════════════════════════╝
+[WiFi] Connected  IP: 192.168.1.42
+[HTTP] Response code: 200
+```
+
+> See [`firmware/docs/pinout.md`](firmware/docs/pinout.md) for wiring the MPU-6050 sensor.
 
 ---
 
