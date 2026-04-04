@@ -2,6 +2,7 @@
   <img src="https://img.shields.io/badge/Status-Active-brightgreen.svg" alt="Status">
   <img src="https://img.shields.io/badge/Stack-FastAPI%20%7C%20React%20%2B%20Vite-blue.svg" alt="Tech Stack">
   <img src="https://img.shields.io/badge/Hardware-ESP32%20%7C%20MPU6050-orange.svg" alt="Hardware">
+  <img src="https://img.shields.io/badge/Firmware-v4.1.0-red.svg" alt="Firmware">
 </div>
 <br>
 
@@ -42,10 +43,27 @@ graph TD
     style D fill:#8b5cf6,stroke:#333,stroke-width:2px
 ```
 
+### Three-Component Ecosystem
+
+| Component | Technology | Purpose |
+| :--- | :--- | :--- |
+| 🟠 **Buoy Firmware** | ESP32 + Arduino C++ | Reads MPU-6050 g-force, classifies sea state, transmits over WiFi |
+| 🔵 **API Backend** | Python + FastAPI | Fuses buoy data with Open-Meteo satellite data, stores history |
+| 🟣 **Web Dashboard** | React + Vite | Real-time public portal and secure admin terminal |
+
 ## 📂 Directory Structure
 
 ```text
 waveguardv4/
+├── firmware/                 # ESP32 Buoy Firmware (Arduino / C++)
+│   ├── config.h              # Central config (WiFi, API, pins, thresholds)
+│   ├── waveguard_buoy/
+│   │   └── waveguard_buoy.ino  # Main sketch (v4.1.0)
+│   ├── docs/
+│   │   ├── pinout.md         # GPIO wiring diagram
+│   │   └── power_budget.md   # Battery life analysis
+│   ├── README.md             # Firmware overview
+│   └── FLASHING.md           # Arduino IDE flashing guide
 ├── backend/              # FastAPI Python server (Primary Logic & API)
 │   ├── main.py           # Core hardware endpoints & data fusion
 │   ├── models.py         # SQLAlchemy DB schemas
