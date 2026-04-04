@@ -1,4 +1,8 @@
 %% chapter8.tex – Future Scope
+%% Group No. 2 | Dept. of CSE (Data Science), MACE Kothamangalam
+%% Team: Muhammed Ajmal P (MAC23CD040), Muhammed Adil PP (MAC23CD039),
+%%       Mohammed Shadeed P (MAC23CD037), Sinan Rahman (LMAC23CD066)
+%% Guide: Prof. Eldo P Elias | May 2026
 \chapter{Future Scope}
 \label{chap:future}
 
@@ -13,30 +17,52 @@ ESP32 devices support ESP-NOW (a proprietary peer-to-peer protocol at 1~Mbps),
 allowing inter-buoy communication without a WiFi router.
 A gateway buoy at shore would aggregate all readings before forwarding to the backend.
 
-\section{Machine-Learning Based Anomaly Detection}
+\section{Integration with INCOIS Alerts}
+
+The Indian National Centre for Ocean Information Services (INCOIS) issues centralised
+swell surge (Kallakkadal) advisories via its Ocean State Forecast (OSF) service.
+Future versions of WaveGuard~V4 will consume the INCOIS public API to ingest national-
+scale forecast data and fuse it with local buoy measurements.
+When INCOIS issues a Kallakkadal advisory for the relevant coastal segment, the system
+will automatically lower the alert threshold to increase sensitivity, providing compound
+warning that combines remote-sensing intelligence with local in-situ data.
+This integration will also enable the buoy to corroborate or refute official forecasts
+in real time, improving both public trust and institutional feedback loops
+\cite{incois2024kallakkadal}.
+
+\section{Machine-Learning Based Classification}
 
 The current threshold-based classifier can produce false positives during
 boat-induced wake events that share an RMS footprint similar to swell.
 An LSTM autoencoder trained on labelled wave spectra could distinguish
 \textit{Kallakkadal}-type long-period swell from boat wake using frequency-domain
-features derived from the 50~Hz time series.
+features derived from the 50~Hz time series \cite{durap2024waveheight}.
 The ESP32's 520~KB RAM is sufficient for inference with TensorFlow Lite for
 Microcontrollers (TFLite-Micro) for models $<$50~KB.
 
-\section{Solar Power Enhancement}
+\section{Mobile Application for Fishermen}
+
+A dedicated mobile application targeting Android devices commonly used by Kerala's
+fishing community would extend alert delivery beyond SMS.
+Built with React Native, the application would receive push notifications (FCM/APNs)
+from the FastAPI backend and display:
+\begin{itemize}
+  \item Current sea-state colour code (green / yellow / red).
+  \item Live GPS track of nearby buoys on an offline-capable map.
+  \item Historical alert timeline for seasonal planning.
+  \item Fishermen's cooperative contact directory for rapid communication.
+\end{itemize}
+The existing FastAPI REST backend requires only a JWT-secured push-token endpoint to
+support mobile clients, making this a low-effort, high-impact enhancement.
+
+\section{Solar-Powered Buoy System}
 
 Replacing the single 18650 cell with a 6~V / 3~W solar panel and a 3-cell 18650
 pack managed by a CN3791 MPPT charger would allow indefinite deployment.
 A night-time deep-sleep schedule (ESP32 ULP coprocessor at 10~µA) would further
 reduce average consumption to $<$30~mA, extending useful solar coverage to cloudy days.
-
-\section{Mobile Application}
-
-A React Native mobile app would extend alert delivery beyond SMS to push
-notifications (FCM/APNs), enabling real-time notifications even when cellular SMS
-credits are exhausted.
-The existing FastAPI REST backend requires only a JWT-secured push-token endpoint to
-support mobile clients.
+This enhancement is essential for enabling the 5--10~buoy coastal network envisaged in
+Section~8.1, as frequent battery replacement at sea is operationally impractical.
 
 \section{Enhanced Notification Channels}
 
@@ -54,7 +80,7 @@ extension) would allow:
 \begin{itemize}
   \item Multi-buoy data aggregation from a central dashboard.
   \item Long-term historical analysis for \textit{Kallakkadal} season profiling.
-  \item Public API for research institutions.
+  \item Public API for research institutions and citizen-science platforms.
 \end{itemize}
 ESP32 cellular data upload via SIM800L TCP/IP stack can replace the shore-based WiFi
 relay, removing the 50~m range constraint.
