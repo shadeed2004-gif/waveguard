@@ -1,0 +1,262 @@
+% ============================================================
+%  Chapter 5 – Design and Implementation
+% ============================================================
+\chapter{Design and Implementation}
+\label{chap:design}
+
+\section{System Architecture}
+
+WaveGuard V4 follows a three-tier client-server architecture comprising a hardware sensing tier, a backend processing tier, and a frontend presentation tier.
+Figure~\ref{fig:system_arch} illustrates the high-level system architecture.
+
+\begin{figure}[H]
+\centering
+% Replace with actual architecture diagram image
+\fbox{\rule{0pt}{6cm}\rule{12cm}{0pt}}
+\caption{WaveGuard V4 System Architecture}
+\label{fig:system_arch}
+\end{figure}
+
+\noindent The four principal subsystems are:
+
+\begin{enumerate}
+  \item \textbf{ESP32 Marine Buoy:} Reads IMU data, computes RMS acceleration, classifies local sea state, and transmits via HTTP GET over WiFi.
+  \item \textbf{Open-Meteo Satellite Feed:} Provides hourly significant wave height and wave period for the deployment coordinates via a public REST API.
+  \item \textbf{FastAPI Backend:} Receives buoy telemetry, fetches satellite data, applies the fusion classification matrix, persists readings to SQLite, and exposes REST endpoints for the frontend.
+  \item \textbf{React + Vite Frontend:} Renders the public safety dashboard and the admin terminal by polling backend REST endpoints every 5 seconds.
+\end{enumerate}
+
+\section{Data Flow}
+
+The end-to-end data flow for a typical alert event is illustrated in Figure~\ref{fig:data_flow} and described below.
+
+\begin{figure}[H]
+\centering
+\fbox{\rule{0pt}{5cm}\rule{12cm}{0pt}}
+\caption{WaveGuard V4 Data Flow Diagram}
+\label{fig:data_flow}
+\end{figure}
+
+\begin{enumerate}
+  \item The ESP32 buoy samples the MPU-6050 at 100 Hz over a 1-second window, computes RMS magnitude (Equation~\ref{eq:rms_accel}), classifies locally, and sends an HTTP GET to \texttt{/api/buoy}.
+  \item The FastAPI endpoint validates the payload via Pydantic, writes the reading to SQLite, and returns HTTP 200.
+  \item On each frontend poll (\texttt{GET /api/status}), the backend concurrently fetches the latest satellite SWH from Open-Meteo (or returns the 4-second cache), applies the fusion rule (Equation~\ref{eq:fusion}), and returns a JSON status object.
+  \item The React dashboard re-renders the alert badge, telemetry gauges, and history chart based on the returned JSON.
+\end{enumerate}
+
+\section{Database Schema}
+
+The SQLite database contains a single primary table, \texttt{buoy\_readings}, as defined in the SQLAlchemy model:
+
+\begin{lstlisting}[style=pythonstyle, caption=SQLAlchemy BuoyReading Model (models.py)]
+from sqlalchemy import Column, Integer, Float, String, DateTime
+from database import Base
+import datetime
+
+class BuoyReading(Base):
+    __tablename__ = "buoy_readings"
+
+    id            = Column(Integer, primary_key=True, index=True)
+    buoy_id       = Column(String, index=True)
+    avg_motion    = Column(Float)
+    wave_speed    = Column(Float, default=0.0)
+    lat           = Column(Float, nullable=True)
+    lon           = Column(Float, nullable=True)
+    eta           = Column(Float, nullable=True)
+    device_status = Column(String, nullable=True)
+    timestamp     = Column(DateTime, default=datetime.datetime.utcnow)
+\end{lstlisting}
+
+\section{Backend Implementation}
+
+\subsection{Application Bootstrap}
+
+The FastAPI application is initialised in \texttt{main.py}.
+CORS middleware is added to permit requests from the React frontend, and all SQLAlchemy models are materialised into the SQLite database on startup.
+
+\begin{lstlisting}[style=pythonstyle, caption=FastAPI Application Bootstrap (main.py excerpt)]
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+import models, database
+
+models.Base.metadata.create_all(bind=database.engine)
+
+app = FastAPI(title="WaveGuard API", version="4.0")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=False,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+\end{lstlisting}
+
+\subsection{Buoy Ingestion Endpoint}
+
+\begin{lstlisting}[style=pythonstyle, caption=Buoy Telemetry Ingestion Endpoint (main.py excerpt)]
+@app.get("/api/buoy")
+async def receive_buoy_data(
+    motion: float = Query(..., ge=0),
+    speed: float  = Query(default=0.0, ge=0),
+    status: str   = Query(default="UNKNOWN"),
+    db: Session   = Depends(database.get_db)
+):
+    reading = models.BuoyReading(
+        buoy_id       = "buoy-01",
+        avg_motion    = motion,
+        wave_speed    = speed,
+        device_status = status,
+    )
+    db.add(reading)
+    db.commit()
+    return {"recorded": True, "motion": motion}
+\end{lstlisting}
+
+\subsection{Alert Fusion and Status Endpoint}
+
+\begin{lstlisting}[style=pythonstyle, caption=Alert Fusion Logic (main.py excerpt)]
+def classify_alert(avg_motion: float, wave_height: float) -> str:
+    if avg_motion >= 0.10 and wave_height >= 2.5:
+        return "WARNING"
+    elif avg_motion >= 0.05 and wave_height >= 1.5:
+        return "WATCH"
+    return "NORMAL"
+
+@app.get("/api/status")
+async def get_status(db: Session = Depends(database.get_db)):
+    latest = db.query(models.BuoyReading)\
+               .order_by(models.BuoyReading.timestamp.desc())\
+               .first()
+    satellite = await fetch_satellite_data()   # cached 4 s
+    alert = classify_alert(
+        latest.avg_motion if latest else 0.0,
+        satellite.get("wave_height", 0.0)
+    )
+    return {
+        "alert":        alert,
+        "avg_motion":   latest.avg_motion if latest else 0.0,
+        "wave_height":  satellite.get("wave_height", 0.0),
+        "wave_period":  satellite.get("wave_period", 0.0),
+        "timestamp":    latest.timestamp.isoformat() if latest else None,
+    }
+\end{lstlisting}
+
+\subsection{Authentication}
+
+Admin endpoints are protected by a bearer-token scheme.
+The \texttt{/api/login} endpoint verifies the provided username and password against environment variables and issues a time-limited session token:
+
+\begin{lstlisting}[style=pythonstyle, caption=Login and Token Issuance (main.py excerpt)]
+import secrets, time
+VALID_TOKENS: dict = {}
+TOKEN_TTL = 8 * 60 * 60   # 8 hours
+
+@app.post("/api/login")
+async def login(payload: LoginPayload, request: Request):
+    _check_rate_limit(request.client.host)
+    if payload.username != ADMIN_USER or payload.password != ADMIN_PASS:
+        raise HTTPException(status_code=401, detail="Invalid credentials")
+    token = secrets.token_urlsafe(32)
+    VALID_TOKENS[token] = time.time() + TOKEN_TTL
+    return {"token": token}
+\end{lstlisting}
+
+\section{Hardware Implementation}
+
+\subsection{Buoy Circuit}
+
+The ESP32 and MPU-6050 are connected via I2C (SDA → GPIO 21, SCL → GPIO 22).
+The MPU-6050 is configured for $\pm$2g accelerometer full-scale range, providing 16,384 LSB/g resolution.
+
+\subsection{ESP32 Firmware}
+
+The firmware implements a 50-sample averaging loop and transmits the result to the backend.
+A representative excerpt is shown in Listing~\ref{lst:firmware}.
+
+\begin{lstlisting}[style=cppstyle, caption=ESP32 Firmware Data Transmission (Arduino C++), label=lst:firmware]
+#include <WiFi.h>
+#include <HTTPClient.h>
+#include <Wire.h>
+#include <MPU6050.h>
+
+const char* ssid       = "YOUR_SSID";
+const char* password   = "YOUR_PASS";
+const char* serverURL  = "http://10.38.178.14:8005/api/buoy";
+
+MPU6050 mpu;
+
+void loop() {
+    int16_t ax, ay, az, gx, gy, gz;
+    float sum = 0.0;
+    const int N = 50;
+    for (int i = 0; i < N; i++) {
+        mpu.getMotion6(&ax, &ay, &az, &gx, &gy, &gz);
+        float mag = sqrt(pow(ax/16384.0, 2) +
+                         pow(ay/16384.0, 2) +
+                         pow(az/16384.0, 2));
+        sum += mag;
+        delay(10);
+    }
+    float avg = sum / N - 1.0;   // remove 1g gravity offset
+    String url = String(serverURL) +
+                 "?motion=" + String(avg, 4) +
+                 "&speed=0.0&status=AUTO";
+    HTTPClient http;
+    http.begin(url);
+    http.GET();
+    http.end();
+    delay(1000);
+}
+\end{lstlisting}
+
+\section{Frontend Implementation}
+
+\subsection{Dashboard Architecture}
+
+The React application is structured into two main route groups:
+\begin{itemize}
+  \item \textbf{Public Portal (\texttt{/}):} Displays the current alert badge, live telemetry gauges, wave height chart, and bilingual alert messages.
+  \item \textbf{Admin Terminal (\texttt{/admin}):} Protected route requiring successful login; provides system controls, recipient management, and status panels.
+\end{itemize}
+
+\subsection{API Polling}
+
+\begin{lstlisting}[style=jsstyle, caption=Frontend Status Polling (React Hook)]
+const [status, setStatus] = React.useState(null);
+
+React.useEffect(() => {
+    const poll = async () => {
+        const res  = await fetch("/api/status");
+        const data = await res.json();
+        setStatus(data);
+    };
+    poll();
+    const id = setInterval(poll, 5000);
+    return () => clearInterval(id);
+}, []);
+\end{lstlisting}
+
+\section{Alert Classification Matrix}
+
+Table~\ref{tab:alert_matrix} presents the complete alert classification matrix implemented in WaveGuard V4.
+
+\begin{table}[H]
+\centering
+\caption{WaveGuard V4 Alert Classification Matrix}
+\label{tab:alert_matrix}
+\begin{tabular}{llll}
+\toprule
+\textbf{Alert Level} & \textbf{Buoy (g)} & \textbf{Satellite SWH (m)} & \textbf{Action} \\
+\midrule
+\texttt{NORMAL}  & \(< 0.05\)  & \(< 1.5\)  & Safe — all activities permitted \\
+\texttt{WATCH}   & \(0.05\)–\(0.09\) & \(1.5\)–\(2.4\) & Caution — monitor conditions \\
+\texttt{WARNING} & \(\geq 0.10\) & \(\geq 2.5\) & Evacuation — leave coastal zone \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Summary}
+
+This chapter presented the complete design and implementation of WaveGuard V4, covering the system architecture, data flow, database schema, backend alert fusion logic, hardware firmware, and frontend polling mechanism.
+The design achieves modularity by separating concerns across hardware, API, and UI layers, enabling independent testing and future extension.

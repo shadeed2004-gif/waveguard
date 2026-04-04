@@ -1,0 +1,71 @@
+% ============================================================
+%  Chapter 1 – Introduction
+% ============================================================
+\chapter{Introduction}
+
+\section{Overview}
+
+The coastal belt of Kerala, particularly the Kanayannur district, is highly vulnerable to a meteorological phenomenon locally known as \textit{Kallakkadal} — a long-period ocean swell surge that reaches the shore without perceptible warning, causing severe casualties, damage to fishing boats, and coastal property destruction.
+Unlike tsunamis, Kallakkadal events are driven by distant storm systems in the Arabian Sea or Indian Ocean, generating long-wavelength swells that travel thousands of kilometres before amplifying near shore due to bathymetric shoaling.
+
+Traditional early-warning mechanisms in Kerala rely on broadcast radio announcements or informal tip networks among fishing communities, offering little quantitative lead time and no real-time confirmation.
+WaveGuard V4 proposes a technology-driven, sensor-fused, and publicly accessible early-warning system that addresses these gaps through an integrated stack of Internet-of-Things hardware and modern web technologies.
+
+\section{Problem Statement}
+
+Coastal communities engaged in fishing and maritime commerce operate at daily risk during the Arabian Sea swell season (May–November).
+The core challenges are:
+
+\begin{enumerate}[label=\roman*.]
+  \item \textbf{Absence of real-time quantitative monitoring:} No publicly available near-shore buoy network provides live wave data for the Kanayannur coastal zone.
+  \item \textbf{High false-alarm rate:} Existing informal warning systems often generate false alarms from boat wakes or other transient disturbances, leading to \textit{alarm fatigue} among residents.
+  \item \textbf{Language accessibility:} Warning dissemination in English alone excludes non-literate Malayalam-speaking fishing households.
+  \item \textbf{Alert latency:} Manual relay of warnings introduces unacceptable delays in life-safety scenarios.
+\end{enumerate}
+
+\section{Objectives}
+
+The primary objectives of the WaveGuard V4 project are:
+
+\begin{enumerate}[label=\arabic*.]
+  \item Design and deploy a low-cost ESP32-based marine buoy instrumented with an MPU-6050 six-axis inertial measurement unit.
+  \item Develop a FastAPI backend service implementing a multi-factor data-fusion algorithm combining buoy accelerometer readings with satellite-derived significant wave height from the Open-Meteo API.
+  \item Implement a three-tier alert classification system (NORMAL, WATCH, WARNING) with defined numerical thresholds to minimise false positives.
+  \item Build a real-time React + Vite web frontend that delivers live telemetry, alert status, and historical trend charts to the public.
+  \item Provide a secure JWT-authenticated admin terminal for system management and status monitoring.
+  \item Support bilingual output in English and Malayalam to serve local fishing communities.
+  \item Lay the architectural groundwork for scaling to a multi-buoy mesh network.
+\end{enumerate}
+
+\section{Scope of the Project}
+
+WaveGuard V4 operates within the following scope:
+
+\begin{itemize}
+  \item \textbf{Geographic scope:} Primary deployment zone is the Kanayannur coastal segment of Ernakulam district, Kerala (approximately 9.9–10.0°N, 76.2–76.3°E).
+  \item \textbf{Sensing scope:} A single prototype buoy measuring tri-axial acceleration at up to 100 Hz and satellite wave height updated every ten minutes.
+  \item \textbf{User scope:} Public safety dashboard accessible by any internet-connected device; admin terminal restricted to authorised personnel.
+  \item \textbf{Current limitations:} SMS and push notifications are architecturally planned but not yet operationally deployed; multi-buoy networking is deferred to future work.
+\end{itemize}
+
+\section{Sustainable Development Goal Mapping}
+
+WaveGuard V4 directly contributes to three United Nations Sustainable Development Goals \cite{undp_sdg}:
+
+\begin{description}
+  \item[\textbf{SDG 11 – Sustainable Cities and Communities}] The system provides early-warning infrastructure that strengthens the resilience and adaptive capacity of coastal communities to natural hazards, directly supporting SDG Target 11.5 (reduce disaster-related mortality and economic loss).
+  \item[\textbf{SDG 13 – Climate Action}] By integrating satellite climate data with in-situ sensing, WaveGuard V4 builds community capacity to understand and respond to climate-driven sea-state anomalies (SDG Target 13.1).
+  \item[\textbf{SDG 14 – Life Below Water}] The project supports safe maritime activity in coastal waters, reduces the risk to fisherfolk, and indirectly promotes sustainable ocean resource utilisation by enabling data-driven fishing decisions (SDG Target 14.2).
+\end{description}
+
+\section{Organisation of the Report}
+
+The remainder of this report is organised as follows.
+Chapter~\ref{chap:litsurvey} reviews related work on coastal monitoring and IoT-based early-warning systems.
+Chapter~\ref{chap:background} describes the background technologies employed.
+Chapter~\ref{chap:reqspec} presents the functional and non-functional requirements.
+Chapter~\ref{chap:design} details the system design and implementation.
+Chapter~\ref{chap:perfeval} presents the performance evaluation methodology and results.
+Chapter~\ref{chap:results} presents screenshots and key metrics.
+Chapter~\ref{chap:future} discusses future enhancements.
+Chapter~\ref{chap:conclusion} concludes the report.

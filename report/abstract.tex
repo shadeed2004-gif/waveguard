@@ -1,0 +1,22 @@
+% ============================================================
+%  Abstract – WaveGuard V4 Mini Project Report
+% ============================================================
+\chapter*{Abstract}
+\addcontentsline{toc}{chapter}{Abstract}
+\thispagestyle{plain}
+
+Coastal communities in Kerala face recurring threats from \textit{Kallakkadal} — a sudden, dangerous swell surge that occurs without warning, particularly along the Kanayannur coastal zone.
+WaveGuard V4 is a Smart Near-Shore Swell Surge Early-Warning System designed to address this life-threatening phenomenon through a dual-horizon sensor fusion approach.
+
+The system integrates real-time telemetry from a custom-built ESP32-based marine buoy equipped with an MPU-6050 six-axis accelerometer, with satellite-derived significant wave height data obtained from the Open-Meteo API.
+A FastAPI Python backend implements a multi-factor classification matrix that fuses buoy accelerometer readings (g-force) with satellite wave height to produce one of three alert levels: \textbf{NORMAL}, \textbf{WATCH}, or \textbf{WARNING}, thereby minimising false positives caused by transient disturbances such as passing vessels.
+
+The system frontend, built with React and Vite, provides a real-time mission-control dashboard and a secure JWT-authenticated admin terminal.
+Bilingual support for English and Malayalam ensures accessibility for local fishing communities.
+
+During prototype evaluation, the system achieved a mean alert latency of under 2 seconds and correctly classified all injected sea-state scenarios across 150 test cycles.
+WaveGuard V4 aligns with UN Sustainable Development Goals SDG 11, SDG 13, and SDG 14, contributing to resilient coastal infrastructure and climate-adaptive safety systems.
+
+\vspace{1cm}
+\noindent\textbf{Keywords:} Coastal early-warning, IoT, ESP32, MPU-6050, sensor fusion, FastAPI, React, Kallakkadal, wave monitoring, Open-Meteo.
+\newpage

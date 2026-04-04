@@ -1,0 +1,151 @@
+% ============================================================
+%  Chapter 4 – Requirement Specification
+% ============================================================
+\chapter{Requirement Specification}
+\label{chap:reqspec}
+
+\section{Introduction}
+
+This chapter specifies the functional and non-functional requirements of WaveGuard V4, followed by the hardware and software environment requirements.
+Requirements are categorised using the MoSCoW prioritisation scheme (Must, Should, Could, Won't).
+
+\section{Functional Requirements}
+
+\subsection{FR-1: Buoy Data Ingestion}
+\begin{itemize}
+  \item \textbf{FR-1.1 (Must):} The system shall accept HTTP GET requests from ESP32 buoy devices at the \texttt{/api/buoy} endpoint containing the fields: \texttt{buoy\_id}, \texttt{avg\_motion} (g-force), \texttt{wave\_speed}, \texttt{lat}, \texttt{lon}, \texttt{device\_status}.
+  \item \textbf{FR-1.2 (Must):} The system shall validate all incoming buoy fields against Pydantic schema constraints (e.g., \texttt{avg\_motion} \(\in\) [0, 100\,000] g).
+  \item \textbf{FR-1.3 (Must):} Valid readings shall be persisted to the SQLite database with a UTC timestamp.
+  \item \textbf{FR-1.4 (Should):} The system shall support a software-simulated buoy endpoint (\texttt{/api/test-buoy}) for development and demonstration.
+\end{itemize}
+
+\subsection{FR-2: Satellite Data Retrieval}
+\begin{itemize}
+  \item \textbf{FR-2.1 (Must):} The backend shall fetch current significant wave height, wave period, and wave direction from the Open-Meteo marine API for the configured latitude and longitude (Kanayannur zone: 9.97°N, 76.28°E).
+  \item \textbf{FR-2.2 (Must):} Satellite data shall be cached for a minimum of 4 seconds to avoid API rate limiting.
+  \item \textbf{FR-2.3 (Should):} The system shall gracefully degrade to buoy-only mode if the Open-Meteo API is unreachable.
+\end{itemize}
+
+\subsection{FR-3: Alert Classification}
+\begin{itemize}
+  \item \textbf{FR-3.1 (Must):} The system shall compute an alert level (\texttt{NORMAL}, \texttt{WATCH}, \texttt{WARNING}) based on the dual-threshold fusion rule defined in Equation~\ref{eq:fusion}.
+  \item \textbf{FR-3.2 (Must):} The alert level shall be updated on every \texttt{/api/status} poll (maximum 5-second interval).
+  \item \textbf{FR-3.3 (Should):} Alert transitions shall be logged to the database with timestamps for audit purposes.
+\end{itemize}
+
+\subsection{FR-4: Public Dashboard}
+\begin{itemize}
+  \item \textbf{FR-4.1 (Must):} The frontend shall display the current alert level with appropriate colour coding (green/amber/red).
+  \item \textbf{FR-4.2 (Must):} The frontend shall display live telemetry gauges for accelerometer g-force and satellite wave height.
+  \item \textbf{FR-4.3 (Must):} The frontend shall display a time-series history chart of the last 50 buoy readings.
+  \item \textbf{FR-4.4 (Must):} All safety-critical text (alert messages) shall be available in both English and Malayalam.
+  \item \textbf{FR-4.5 (Should):} The dashboard shall auto-refresh without requiring a page reload.
+\end{itemize}
+
+\subsection{FR-5: Admin Terminal}
+\begin{itemize}
+  \item \textbf{FR-5.1 (Must):} Access to the admin terminal shall require valid JWT-based session authentication.
+  \item \textbf{FR-5.2 (Must):} The admin terminal shall display system health status, connected buoy IDs, and recent alert history.
+  \item \textbf{FR-5.3 (Must):} Administrators shall be able to manually inject test readings via the admin UI.
+  \item \textbf{FR-5.4 (Must):} The login endpoint shall enforce a sliding-window rate limit of five attempts per IP per 60 seconds.
+  \item \textbf{FR-5.5 (Should):} Administrators shall be able to manage SMS recipient lists for alert notifications.
+\end{itemize}
+
+\subsection{FR-6: History and Reporting}
+\begin{itemize}
+  \item \textbf{FR-6.1 (Must):} The \texttt{/api/history} endpoint shall return the last \(N\) buoy readings (default \(N = 50\), maximum \(N = 100\)) as a JSON array.
+  \item \textbf{FR-6.2 (Should):} The frontend shall render a chart visualising historical wave height and alert transitions over time.
+\end{itemize}
+
+\section{Non-Functional Requirements}
+
+\subsection{Performance}
+\begin{itemize}
+  \item \textbf{NFR-P1:} The \texttt{/api/status} endpoint shall respond within 500 ms under normal operating load.
+  \item \textbf{NFR-P2:} The end-to-end alert latency from buoy trigger to frontend display shall not exceed 10 seconds.
+  \item \textbf{NFR-P3:} The backend shall sustain at least 100 concurrent HTTP connections without performance degradation.
+\end{itemize}
+
+\subsection{Reliability}
+\begin{itemize}
+  \item \textbf{NFR-R1:} The system shall operate continuously for at least 72 hours without requiring manual intervention.
+  \item \textbf{NFR-R2:} The database shall maintain referential integrity; no buoy reading shall be lost due to application crash (write-ahead log enabled in SQLite).
+\end{itemize}
+
+\subsection{Security}
+\begin{itemize}
+  \item \textbf{NFR-S1:} All admin API endpoints shall be protected by bearer token authentication.
+  \item \textbf{NFR-S2:} Plain-text credentials shall never be logged or transmitted in API responses.
+  \item \textbf{NFR-S3:} CORS policy shall be tightened to specific frontend origin in production deployment.
+\end{itemize}
+
+\subsection{Usability}
+\begin{itemize}
+  \item \textbf{NFR-U1:} The public dashboard shall be fully functional on mobile browsers (responsive design, viewport meta tag set).
+  \item \textbf{NFR-U2:} Alert messages shall be readable without domain knowledge by a general coastal resident.
+  \item \textbf{NFR-U3:} The admin terminal UI shall provide contextual tooltips for all system metrics.
+\end{itemize}
+
+\subsection{Maintainability}
+\begin{itemize}
+  \item \textbf{NFR-M1:} All backend configurations (credentials, database path, API URL) shall be externalised to a \texttt{.env} file.
+  \item \textbf{NFR-M2:} The codebase shall include unit tests for core alert classification and authentication logic.
+\end{itemize}
+
+\section{Hardware Requirements}
+
+Table~\ref{tab:hw_req} summarises the hardware components required for the WaveGuard V4 prototype.
+
+\begin{table}[H]
+\centering
+\caption{Hardware Requirements}
+\label{tab:hw_req}
+\begin{tabular}{lll}
+\toprule
+\textbf{Component} & \textbf{Specification} & \textbf{Quantity} \\
+\midrule
+Microcontroller & ESP32-WROOM-32D (240 MHz, 4 MB flash) & 1 \\
+IMU & InvenSense MPU-6050 (6-axis, I2C) & 1 \\
+WiFi router & Any IEEE 802.11n access point & 1 \\
+Laptop/Server & Intel Core i5 or equivalent, 8 GB RAM & 1 \\
+Power supply & 5 V / 2 A USB-C (buoy), 230 V AC (server) & 1 each \\
+Buoy enclosure & Waterproof IP67 rated enclosure & 1 \\
+Connecting cables & USB-A to USB-C (programming), jumper wires & 1 set \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Software Requirements}
+
+Table~\ref{tab:sw_req} lists the software dependencies.
+
+\begin{table}[H]
+\centering
+\caption{Software Requirements}
+\label{tab:sw_req}
+\begin{tabular}{lll}
+\toprule
+\textbf{Component} & \textbf{Version} & \textbf{Purpose} \\
+\midrule
+Python & 3.10+ & Backend runtime \\
+FastAPI & 0.111+ & Web framework \\
+Uvicorn & 0.29+ & ASGI server \\
+SQLAlchemy & 2.x & ORM / database \\
+httpx & 0.27+ & Async HTTP client (Open-Meteo) \\
+python-dotenv & 1.0+ & Environment variable management \\
+pydantic & 2.x & Data validation \\
+Node.js & 18+ & Frontend build toolchain \\
+React & 18+ & UI library \\
+Vite & 5+ & Frontend build tool / dev server \\
+Arduino IDE & 2.x & ESP32 firmware compilation \\
+SQLite & 3.x & Embedded database engine \\
+Git & 2.x & Version control \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{Summary}
+
+The requirements documented in this chapter define a complete specification for the WaveGuard V4 system.
+The functional requirements ensure full coverage of the buoy data pipeline, alert logic, public dashboard, and admin terminal.
+Non-functional requirements establish the performance, security, and usability benchmarks against which the prototype is evaluated in Chapter~\ref{chap:perfeval}.

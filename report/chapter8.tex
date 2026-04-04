@@ -1,0 +1,98 @@
+% ============================================================
+%  Chapter 8 – Future Scope
+% ============================================================
+\chapter{Future Scope}
+\label{chap:future}
+
+\section{Introduction}
+
+WaveGuard V4 represents a validated proof-of-concept for near-shore swell surge early warning.
+This chapter outlines the principal directions for extending the system toward production-grade coastal deployment, improved prediction capability, and broader community reach.
+
+\section{Multi-Buoy Mesh Network}
+
+The current prototype operates with a single buoy, providing a point measurement at one location.
+Future work should expand to a spatially distributed network of buoys along the entire Kanayannur coastal stretch (approximately 15 km), enabling:
+
+\begin{itemize}
+  \item \textbf{Spatial interpolation} of wave height across the buoy network using kriging or IDW algorithms, producing a real-time wave height map.
+  \item \textbf{Swell tracking}: Detection of the approaching wavefront direction and estimated time-of-arrival at each coastal segment based on wave propagation speed differences between buoys.
+  \item \textbf{Redundancy}: If one buoy loses connectivity, neighbouring buoys continue to provide data, eliminating single points of failure.
+\end{itemize}
+
+The backend architecture of WaveGuard V4 already supports multi-buoy ingestion via the \texttt{buoy\_id} field in the data model and the \texttt{/api/buoy} endpoint, requiring only database query and UI updates for full multi-buoy support.
+
+\section{Machine Learning Integration}
+
+The rule-based fusion algorithm (Equation~\ref{eq:fusion}) uses hand-crafted thresholds derived from the literature.
+A supervised machine learning pipeline could replace or augment this with a data-driven model:
+
+\subsection{LSTM Sequence Prediction}
+
+Long Short-Term Memory (LSTM) networks \cite{hochreiter1997} are well-suited to modelling temporal dependencies in time-series sensor data.
+A future LSTM model could be trained on historical buoy time-series to predict the alert level 30–60 minutes ahead, providing significantly more lead time for evacuation decisions.
+
+\subsection{Anomaly Detection}
+
+An autoencoder-based anomaly detector could identify buoy sensor faults (accelerometer spike due to impact rather than wave) and suppress false alerts, further reducing alarm fatigue.
+
+\section{Mobile Application}
+
+A progressive web application (PWA) or native Android/iOS app would extend WaveGuard V4's reach to fisherfolk without reliable laptop/desktop access.
+Key planned features:
+\begin{itemize}
+  \item Push notifications for WARNING alert state (using Firebase Cloud Messaging).
+  \item Offline capability: last-known alert state cached locally if internet connectivity is lost at sea.
+  \item GPS-based contextual alerts: alert severity scaled by proximity of the user's GPS position to the coastline.
+  \item Voice alerts in Malayalam for users with limited literacy.
+\end{itemize}
+
+\section{SMS and IVR Alerting}
+
+The admin terminal already provides a recipient management UI.
+Full integration with an SMS gateway (e.g., Twilio or the Indian government's BharatNet SMS API) would enable automatic text message dispatch to registered fisherfolk mobile numbers when the system transitions to WARNING state.
+Interactive Voice Response (IVR) call-outs in Malayalam are also planned for communities without reliable data connectivity.
+
+\section{Solar-Powered Buoy Deployment}
+
+The current ESP32 prototype is powered by a USB-C cable tethered to shore.
+For open-water deployment, the buoy should be redesigned with:
+\begin{itemize}
+  \item A 6 W solar panel and LiFePO\textsubscript{4} battery pack (estimated 72-hour autonomy without sunlight).
+  \item Low-power deep-sleep cycles on the ESP32 between measurement intervals to extend battery life.
+  \item 4G LTE (via SIM800/SIM7600 module) as a fallback when WiFi coverage is unavailable offshore.
+  \item IP68-rated hull constructed from marine-grade HDPE to withstand salt spray and biofouling.
+\end{itemize}
+
+\section{Integration with National Early-Warning Infrastructure}
+
+India's National Centre for Ocean Information Services (INCOIS) operates the Indian Tsunami Early Warning Centre (ITEWC) and provides open dissemination APIs for ocean state bulletins.
+Future versions of WaveGuard could ingest INCOIS data as an additional satellite layer alongside Open-Meteo, improving forecast accuracy for extreme events.
+
+\section{Data Archival and Research Portal}
+
+Accumulated buoy time-series constitute valuable research data for coastal oceanographers.
+A planned research portal would:
+\begin{itemize}
+  \item Archive all buoy readings to a cloud-hosted PostgreSQL database for long-term retention.
+  \item Expose a public REST API for researchers to download historical wave data in NetCDF or CSV format.
+  \item Provide automated Kallakkadal event detection reports, correlated with INCOIS bulletin records.
+\end{itemize}
+
+\section{Regulatory and Deployment Considerations}
+
+Deployment of marine sensors in Indian coastal waters requires clearance from:
+\begin{itemize}
+  \item \textbf{Indian Coast Guard}: For deployment of floating structures within the territorial sea.
+  \item \textbf{Ministry of Earth Sciences}: For environmental monitoring sensor networks on the coast.
+  \item \textbf{District Disaster Management Authority (DDMA) Ernakulam}: For integration with the district-level early-warning and evacuation plan.
+\end{itemize}
+
+Engaging with these authorities is an essential step before transitioning from prototype to operational deployment.
+
+\section{Summary}
+
+WaveGuard V4 provides a solid architectural foundation upon which a production-grade coastal early-warning network can be built.
+The near-term priorities are multi-buoy networking, SMS alerting, and solar-powered buoy hardware.
+Medium-term priorities include LSTM-based swell prediction and mobile application development.
+Long-term, integration with national oceanographic infrastructure and regulatory compliance will be required to achieve operational status across the Kerala coastline.

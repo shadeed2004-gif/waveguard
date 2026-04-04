@@ -1,0 +1,148 @@
+% ============================================================
+%  Chapter 3 – Background
+% ============================================================
+\chapter{Background}
+\label{chap:background}
+
+\section{Introduction}
+
+This chapter provides the theoretical and technical background for the tools, protocols, and algorithms employed in WaveGuard V4.
+Understanding these foundations is essential to appreciating the design decisions described in Chapter~\ref{chap:design}.
+
+\section{FastAPI – Python Asynchronous Web Framework}
+
+FastAPI \cite{fastapi2023} is a modern, high-performance Python web framework built on Starlette (the ASGI toolkit) and Pydantic (data validation).
+Its key characteristics relevant to WaveGuard V4 are:
+
+\begin{itemize}
+  \item \textbf{ASGI concurrency:} FastAPI uses Python's \texttt{asyncio} event loop, enabling thousands of concurrent connections without thread-per-request overhead. This is critical for handling simultaneous buoy telemetry ingestion and frontend polling.
+  \item \textbf{Automatic schema generation:} All API endpoints are automatically documented via OpenAPI 3.x (Swagger UI at \texttt{/docs}), reducing integration friction for hardware developers.
+  \item \textbf{Pydantic validation:} Incoming request payloads are rigorously validated against typed schemas, rejecting malformed sensor data before it reaches business logic.
+  \item \textbf{Dependency injection:} The \texttt{Depends()} system enables clean injection of database sessions, authentication guards, and rate limiters, avoiding global state.
+\end{itemize}
+
+\subsection{Rate Limiting and Security}
+
+The login endpoint in WaveGuard V4 implements an in-process sliding-window rate limiter that permits at most five authentication attempts per IP address per 60-second window, mitigating brute-force attacks.
+JWT-equivalent session tokens with an 8-hour TTL are issued on successful authentication and stored in a server-side dictionary, enabling instant revocation on logout.
+
+\section{React and Vite}
+
+\subsection{React}
+React \cite{react2023} is a declarative JavaScript library for building component-based user interfaces.
+Its virtual DOM reconciliation algorithm computes the minimal set of DOM mutations required for each state change, providing smooth real-time updates at 60 frames per second even with frequently changing telemetry data.
+
+\subsection{Vite}
+Vite \cite{vite2023} is a next-generation build tool that uses native ES module imports during development (Hot Module Replacement) and Rollup for production bundling.
+The \texttt{vite.config.js} proxy configuration routes all \texttt{/api} requests from the React development server to the FastAPI backend (\texttt{localhost:8005}), enabling seamless cross-origin development without modifying backend CORS settings.
+
+\subsection{Data Visualisation}
+WaveGuard V4's frontend uses Recharts for rendering real-time time-series wave height and g-force plots.
+The dashboard auto-refreshes sensor data every five seconds via \texttt{setInterval}-driven \texttt{fetch} calls, and alert states are colour-coded with CSS glassmorphism effects for visual clarity.
+
+\section{ESP32 Microcontroller}
+
+The ESP32-WROOM-32 module (Espressif Systems) \cite{espressif2023} is the central processing unit of the WaveGuard marine buoy.
+Its specifications relevant to this application are summarised in Table~\ref{tab:esp32_specs}.
+
+\begin{table}[H]
+\centering
+\caption{ESP32-WROOM-32 Key Specifications}
+\label{tab:esp32_specs}
+\begin{tabular}{ll}
+\toprule
+\textbf{Parameter} & \textbf{Value} \\
+\midrule
+Core architecture   & Xtensa LX6 dual-core, 240 MHz \\
+Flash memory        & 4 MB \\
+SRAM                & 520 KB \\
+WiFi standard       & IEEE 802.11 b/g/n (2.4 GHz) \\
+Bluetooth           & BT 4.2 / BLE \\
+I2C interfaces      & 2 \\
+Operating voltage   & 3.3 V \\
+Deep sleep current  & 10 \(\mu\)A \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The ESP32 reads IMU data over I2C, computes a rolling average of RMS acceleration, classifies the sea state locally, and transmits the result via a simple HTTP GET request to the FastAPI backend.
+This \textit{edge-compute} paradigm reduces network bandwidth requirements and ensures the buoy can make rudimentary local decisions even if connectivity is temporarily lost.
+
+\section{MPU-6050 Inertial Measurement Unit}
+
+The InvenSense MPU-6050 \cite{invensense2013} is a six-axis IMU combining a 3-axis MEMS gyroscope and a 3-axis MEMS accelerometer on a single die.
+Table~\ref{tab:mpu6050_specs} summarises its key specifications.
+
+\begin{table}[H]
+\centering
+\caption{MPU-6050 Key Specifications}
+\label{tab:mpu6050_specs}
+\begin{tabular}{ll}
+\toprule
+\textbf{Parameter} & \textbf{Value} \\
+\midrule
+Accelerometer full-scale range & \(\pm\)2g, \(\pm\)4g, \(\pm\)8g, \(\pm\)16g \\
+Accelerometer sensitivity (±2g) & 16,384 LSB/g \\
+Gyroscope full-scale range & \(\pm\)250, \(\pm\)500, \(\pm\)1000, \(\pm\)2000 °/s \\
+Communication interface & I2C (up to 400 kHz) \\
+Operating voltage & 2.375–3.46 V \\
+Sample rate & Up to 1000 Hz (accel), 8000 Hz (gyro) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Wave Motion Estimation}
+
+The buoy firmware computes the RMS of the acceleration magnitude vector over a sampling window \(N\):
+
+\begin{equation}
+  \bar{a} = \sqrt{\frac{1}{N}\sum_{i=1}^{N}\left(a_{x,i}^{2} + a_{y,i}^{2} + a_{z,i}^{2}\right)}
+  \label{eq:rms_accel}
+\end{equation}
+
+where \(a_{x,i}\), \(a_{y,i}\), \(a_{z,i}\) are the three-axis accelerometer samples in units of \textit{g}.
+Gravity is removed by subtracting the static bias, effectively isolating dynamic wave-induced acceleration.
+The resulting value \(\bar{a}\) is transmitted to the backend as \texttt{avg\_motion}.
+
+\section{SQLite and SQLAlchemy}
+
+SQLite is a serverless, file-based relational database engine embedded directly into the FastAPI process.
+SQLAlchemy \cite{sqlalchemy2023} provides the ORM layer, enabling Python objects to be persisted and queried without writing raw SQL.
+The \texttt{BuoyReading} model stores each received telemetry packet with a UTC timestamp, enabling the historical data endpoint (\texttt{/api/history}) to serve time-series plots to the frontend.
+
+\section{Open-Meteo API}
+
+Open-Meteo \cite{openmeteo2022} is a free, open-source weather API providing sub-hourly forecasts derived from ECMWF's operational NWP model ensemble.
+WaveGuard V4 queries the marine endpoint:
+
+\begin{verbatim}
+GET https://marine-api.open-meteo.com/v1/marine
+    ?latitude=9.97&longitude=76.28
+    &hourly=wave_height,wave_period,wave_direction
+    &forecast_days=1
+\end{verbatim}
+
+The response JSON contains significant wave height (SWH), dominant wave period, and wave direction, updated hourly.
+The backend caches this response for 4 seconds to avoid rate limiting during rapid frontend polling.
+
+\section{Alert Fusion Algorithm}
+
+The core intelligence of WaveGuard V4 is a simple but robust rule-based fusion function implemented in the FastAPI backend.
+Given the buoy average motion \(\bar{a}\) and the satellite SWH \(H_s\), the alert level is determined as follows:
+
+\begin{equation}
+  \text{Alert} =
+  \begin{cases}
+    \texttt{WARNING} & \text{if } \bar{a} \geq 0.10\,g \text{ and } H_s \geq 2.5\,\text{m} \\
+    \texttt{WATCH}   & \text{if } \bar{a} \geq 0.05\,g \text{ and } H_s \geq 1.5\,\text{m} \\
+    \texttt{NORMAL}  & \text{otherwise}
+  \end{cases}
+  \label{eq:fusion}
+\end{equation}
+
+Requiring both conditions to be simultaneously satisfied eliminates single-sensor false positives: a large vessel wake may trigger the accelerometer threshold but will not elevate satellite SWH; conversely, a swell approaching from open water will be detected by both sensors.
+
+\section{Summary}
+
+This chapter has established the theoretical and technical foundations for WaveGuard V4.
+The chosen technologies — FastAPI, React, ESP32, MPU-6050, SQLite, and Open-Meteo — collectively provide a low-cost, high-reliability, real-time sensing and alerting platform suited to near-shore coastal deployment.
