@@ -36,16 +36,27 @@ from pydantic import BaseModel, Field
 
 import models
 import database
+import bcrypt
 
 # ── Bootstrap ─────────────────────────────────────────────────
 models.Base.metadata.create_all(bind=database.engine)
 
-app = FastAPI(title="WaveGuard API", version="4.0")
+# ── Environment ────────────────────────────────────────────────
+IS_PRODUCTION = os.getenv("ENVIRONMENT", "").lower() == "production"
+FRONTEND_URL = os.getenv("FRONTEND_URL", "http://localhost:3000")
+
+app = FastAPI(
+    title="WaveGuard API",
+    version="4.0",
+    docs_url=None if IS_PRODUCTION else "/docs",
+    redoc_url=None if IS_PRODUCTION else "/redoc",
+    openapi_url=None if IS_PRODUCTION else "/openapi.json",
+)
 
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],       # Lock down in production (see README)
+    allow_origins=[FRONTEND_URL],
     allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -54,8 +65,21 @@ app.add_middleware(
 security = HTTPBearer(auto_error=False)
 
 # ── Credentials ────────────────────────────────────────────────
-ADMIN_USER = os.getenv("WAVEGUARD_ADMIN_USER", "admin")
-ADMIN_PASS = os.getenv("WAVEGUARD_ADMIN_PASS", "waveguard2024")
+ADMIN_USER = os.getenv("WAVEGUARD_ADMIN_USER")
+ADMIN_PASS = os.getenv("WAVEGUARD_ADMIN_PASS")
+if not ADMIN_USER or not ADMIN_PASS:
+    import warnings
+    warnings.warn(
+        "WAVEGUARD_ADMIN_USER and WAVEGUARD_ADMIN_PASS are not set! "
+        "Using insecure defaults. Set these in .env or environment before deploying.",
+        stacklevel=1,
+    )
+    ADMIN_USER = ADMIN_USER or "admin"
+    ADMIN_PASS = ADMIN_PASS or "waveguard2024"
+ADMIN_PASS_HASH = bcrypt.hashpw(ADMIN_PASS.encode('utf-8'), bcrypt.gensalt()).decode('utf-8')
+
+# ── Buoy API Key ───────────────────────────────────────────────
+BUOY_API_KEY = os.getenv("WAVEGUARD_BUOY_API_KEY")
 
 # Token → expiry timestamp
 VALID_TOKENS: Dict[str, float] = {}  # token → unix expiry time
@@ -108,6 +132,31 @@ def require_auth(creds: HTTPAuthorizationCredentials = Depends(security)):
     # Sliding window — refresh expiry on activity
     VALID_TOKENS[creds.credentials] = time.time() + TOKEN_TTL_SECONDS
     return creds.credentials
+
+
+# ── Buoy API Key Verification ──────────────────────────────────
+async def verify_buoy_key(request: Request):
+    """Validates the X-Buoy-Key header for IoT device authentication."""
+    if not BUOY_API_KEY:
+        return  # Skip check if no key configured (dev mode)
+    key = request.headers.get("X-Buoy-Key")
+    if key != BUOY_API_KEY:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Invalid or missing buoy API key.",
+        )
+
+
+# ── Security Headers Middleware ────────────────────────────────
+@app.middleware("http")
+async def add_security_headers(request: Request, call_next):
+    response = await call_next(request)
+    response.headers["X-Content-Type-Options"] = "nosniff"
+    response.headers["X-Frame-Options"] = "DENY"
+    response.headers["X-XSS-Protection"] = "1; mode=block"
+    if IS_PRODUCTION:
+        response.headers["Strict-Transport-Security"] = "max-age=31536000; includeSubDomains"
+    return response
 
 
 # ── Classification (matches ESP32 buoy thresholds) ─────────────
@@ -285,7 +334,7 @@ async def login(body: LoginPayload, request: Request):
 
     LOGIN_ATTEMPTS[ip].append(now)
 
-    if body.username == ADMIN_USER and body.password == ADMIN_PASS:
+    if body.username == ADMIN_USER and bcrypt.checkpw(body.password.encode('utf-8'), ADMIN_PASS_HASH.encode('utf-8')):
         token = secrets.token_hex(32)
         VALID_TOKENS[token] = now + TOKEN_TTL_SECONDS
         return {"token": token, "username": body.username}
@@ -301,7 +350,7 @@ async def logout(token: str = Depends(require_auth)):
     return {"success": True}
 
 @app.post("/api/buoy")
-async def receive_buoy(request: Request, db: Session = Depends(database.get_db)):
+async def receive_buoy(request: Request, db: Session = Depends(database.get_db), _=Depends(verify_buoy_key)):
     try:
         body = await request.json()
         data = BuoyPayload(
@@ -317,10 +366,10 @@ async def receive_buoy(request: Request, db: Session = Depends(database.get_db))
         return {"success": True, "status": row.buoy_status}
     except Exception as e:
         print(f"POST ERROR: {e}")
-        return {"success": False, "error": str(e)}
+        return {"success": False, "error": "Internal server error"}
 
 @app.get("/api/buoy")
-async def receive_buoy_get(request: Request, db: Session = Depends(database.get_db)):
+async def receive_buoy_get(request: Request, db: Session = Depends(database.get_db), _=Depends(verify_buoy_key)):
     params = dict(request.query_params)
     try:
         data = BuoyPayload(
@@ -334,7 +383,7 @@ async def receive_buoy_get(request: Request, db: Session = Depends(database.get_
         return {"success": True, "status": row.buoy_status}
     except Exception as e:
         print(f"GET ERROR: {e}")
-        return {"success": False, "error": str(e)}
+        return {"success": False, "error": "Internal server error"}
 
 
 
@@ -344,9 +393,10 @@ async def test_buoy(
     speed:  float = 0.0,
     eta:    Optional[float] = None,
     device_status: Optional[str] = None,
-    db: Session = Depends(database.get_db)
+    db: Session = Depends(database.get_db),
+    token: str = Depends(require_auth),
 ):
-    """Inject a simulated reading. Browse http://localhost:8000/docs to use it.
+    """Inject a simulated reading (admin-only). Browse /docs to use it.
     motion uses g-force scale: 0.03=CALM, 0.07=MODERATE, 0.15=HIGH WAVE"""
     data = BuoyPayload(
         buoy_id="WG-01-TEST", avg_motion=motion,

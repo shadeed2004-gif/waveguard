@@ -30,6 +30,6 @@ firmware/**/*.bin
 firmware/**/*.map
 firmware/**/*.hex
 
-# Firmware — sensitive credentials (keep config.h template, exclude local copies)
-# If you copy config.h to a local-only version, add that pattern here:
-# firmware/config.local.h
+# Firmware — sensitive credentials
+firmware/config.h
+firmware/config.local.h

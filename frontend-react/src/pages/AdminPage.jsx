@@ -33,10 +33,19 @@ export default function AdminPage() {
   const [toast, setToast] = useState({ show: false, message: '', type: 'info' });
   const prevFusionRef = useRef(null);
 
-  // Check for persisted session
+  // Check for persisted session (validate token with backend)
   useEffect(() => {
-    const token = localStorage.getItem('wg_token');
-    if (token) setIsLoggedIn(true);
+    const token = sessionStorage.getItem('wg_token');
+    if (token) {
+      fetch('/api/health', {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+        .then((res) => {
+          if (res.ok) setIsLoggedIn(true);
+          else { sessionStorage.removeItem('wg_token'); sessionStorage.removeItem('wg_user'); }
+        })
+        .catch(() => { sessionStorage.removeItem('wg_token'); sessionStorage.removeItem('wg_user'); });
+    }
   }, []);
 
   const showToast = useCallback((message, type = 'info') => {
@@ -83,8 +92,6 @@ export default function AdminPage() {
     const res = await apiLogin(username, password);
     sessionStorage.setItem('wg_token', res.token);
     sessionStorage.setItem('wg_user', username);
-    localStorage.setItem('wg_token', res.token);
-    localStorage.setItem('wg_user', username);
     setIsLoggedIn(true);
   };
 
@@ -93,8 +100,6 @@ export default function AdminPage() {
     if (token) await apiLogout(token);
     sessionStorage.removeItem('wg_token');
     sessionStorage.removeItem('wg_user');
-    localStorage.removeItem('wg_token');
-    localStorage.removeItem('wg_user');
     setIsLoggedIn(false);
     setData(null);
     prevFusionRef.current = null;
@@ -131,7 +136,7 @@ export default function AdminPage() {
           subtitle={panelInfo.sub}
           backendOnline={backendOnline}
           lastSuccessTime={lastSuccessTime}
-          username={localStorage.getItem('wg_user') || 'Admin'}
+          username={sessionStorage.getItem('wg_user') || 'Admin'}
         />
 
         {/* Historical Mode Toggle */}

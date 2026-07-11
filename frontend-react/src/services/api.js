@@ -1,4 +1,5 @@
-const API_BASE = '/api';
+const API_BASE = import.meta.env.VITE_API_URL || '/api';
+
 
 export async function fetchStatus(mode = 'live') {
   const res = await fetch(`${API_BASE}/status?t=${Date.now()}&mode=${mode}`);
