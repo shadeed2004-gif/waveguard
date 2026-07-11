@@ -16,6 +16,27 @@
 
 ---
 
+## 🚀 Live Demo
+
+* **Public Dashboard:** [https://waveguard-liart.vercel.app](https://waveguard-liart.vercel.app)
+* **Admin Dashboard:** [https://waveguard-liart.vercel.app/admin](https://waveguard-liart.vercel.app/admin)
+  > [!NOTE]  
+  > Admin credentials are not publicly available. Contact the project owner for access.
+* **Backend API:** [https://waveguard-backend.onrender.com](https://waveguard-backend.onrender.com)
+* **Health Check:** [https://waveguard-backend.onrender.com/api/health](https://waveguard-backend.onrender.com/api/health)
+
+## 📦 Repository & Deployment
+
+* **GitHub Repository:** [https://github.com/shadeed2004-gif/waveguard](https://github.com/shadeed2004-gif/waveguard)
+
+| Service | Platform | URL |
+| :--- | :--- | :--- |
+| **Frontend** | Vercel | [https://waveguard-liart.vercel.app](https://waveguard-liart.vercel.app) |
+| **Backend** | Render | [https://waveguard-backend.onrender.com](https://waveguard-backend.onrender.com) |
+| **Health Check** | Render | [https://waveguard-backend.onrender.com/api/health](https://waveguard-backend.onrender.com/api/health) |
+
+---
+
 ## ✨ System Highlights
 
 - 🚁 **Mission-Control Aesthetics**: Premium dark-mode React UI with glassmorphism and real-time telemetry gauges.
