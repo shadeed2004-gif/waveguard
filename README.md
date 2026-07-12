@@ -15,6 +15,16 @@
 </p>
 
 ---
+## 👥 Team
+
+| Member | Role |
+|---|---|
+| Muhammed Ajmal P | Team Lead · Hardware & firmware (ESP32, sensors) |
+| Sinan Rahman | Hardware & firmware (ESP32, sensors) |
+| Mohammed Shadeed P | Software (backend/frontend), deployment |
+| Muhammed Adil P P | Software (backend/frontend), physical buoy construction |
+
+*WaveGuard v4 was built as a 4-person team project — software, firmware, and physical hardware were developed in parallel, led by Muhammed Ajmal P.*
 
 ## 🚀 Live Demo
 
