@@ -156,7 +156,10 @@ npm run dev
 
 ## 📡 Hardware Integration (ESP32)
 
-WaveGuard is designed for physical marine deployment. Ensure your ESP32 is flashing data to the correct local IPv4 address of your laptop.
+WaveGuard is designed for physical marine deployment. 
+
+> [!TIP]
+> **Deploying to the ocean?** If you want to connect your ESP32 to the live deployed website on Render instead of your local laptop, read the **[Live Deployment Hardware Guide](./CONNECTING_HARDWARE.md)**.
 
 **ESP32 C++ Payload Example:**
 ```cpp

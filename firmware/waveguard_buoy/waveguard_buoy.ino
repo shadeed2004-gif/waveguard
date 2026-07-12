@@ -29,6 +29,7 @@ static_assert(
 );
 
 #include <WiFi.h>
+#include <WiFiClientSecure.h>
 #include <HTTPClient.h>
 #include <Wire.h>
 #include <Adafruit_MPU6050.h>
@@ -209,11 +210,20 @@ void sendReading(float avgMotion, float waveSpeed, float eta, const String &stat
   String encodedStatus = urlEncode(statusStr);
 
   // Build query-string URL
-  String url = "http://";
-  url += SERVER_IP;
-  url += ":";
-  url += SERVER_PORT;
-  url += API_ENDPOINT;
+  String url = "";
+  if (SERVER_PORT == 443) {
+    url = "https://";
+    url += SERVER_IP;
+    url += API_ENDPOINT;
+  } else {
+    url = "http://";
+    url += SERVER_IP;
+    if (SERVER_PORT != 80) {
+      url += ":";
+      url += SERVER_PORT;
+    }
+    url += API_ENDPOINT;
+  }
   url += "?buoy_id=";    url += BUOY_ID;
   url += "&motion=";     url += String(avgMotion, 4);
   url += "&speed=";      url += String(waveSpeed, 2);
@@ -232,8 +242,18 @@ void sendReading(float avgMotion, float waveSpeed, float eta, const String &stat
   }
 
   HTTPClient http;
-  http.begin(url);
+  WiFiClientSecure secureClient;
+  
+  if (SERVER_PORT == 443) {
+    secureClient.setInsecure(); // Skip SSL cert validation for simplicity in IoT
+    http.begin(secureClient, url);
+  } else {
+    http.begin(url);
+  }
   http.setTimeout(HTTP_TIMEOUT_MS);
+  
+  // Add authentication header
+  http.addHeader("X-Buoy-Key", BUOY_API_KEY);
 
   int httpCode = http.GET();
 
