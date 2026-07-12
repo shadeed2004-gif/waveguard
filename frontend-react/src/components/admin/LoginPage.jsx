@@ -65,7 +65,7 @@ export default function LoginPage({ onLogin }) {
             value={username}
             onChange={(e) => setUsername(e.target.value)}
             placeholder="Enter username"
-            className="w-full px-3.5 py-2.5 border-[1.5px] border-wg-border rounded-[7px] text-sm text-navy bg-white outline-none focus:border-wg-blue-3 transition-colors mb-4 font-[family-name:var(--font-family-sora)]"
+            className="w-full px-3.5 py-2.5 border-[1.5px] border-wg-border rounded-[7px] text-base sm:text-sm text-navy bg-white outline-none focus:border-wg-blue-3 transition-colors mb-4 font-[family-name:var(--font-family-sora)]"
           />
 
           <label className="block text-[11px] font-bold tracking-wider uppercase text-wg-muted mb-1.5">Password</label>
@@ -74,7 +74,7 @@ export default function LoginPage({ onLogin }) {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             placeholder="Enter password"
-            className="w-full px-3.5 py-2.5 border-[1.5px] border-wg-border rounded-[7px] text-sm text-navy bg-white outline-none focus:border-wg-blue-3 transition-colors mb-4 font-[family-name:var(--font-family-sora)]"
+            className="w-full px-3.5 py-2.5 border-[1.5px] border-wg-border rounded-[7px] text-base sm:text-sm text-navy bg-white outline-none focus:border-wg-blue-3 transition-colors mb-4 font-[family-name:var(--font-family-sora)]"
           />
 
           {error && (
