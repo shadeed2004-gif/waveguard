@@ -11,7 +11,7 @@ const TECH_CHIPS = ['ESP32', 'MPU-6050', 'NEO-6M GPS', 'Firebase', 'SQLite', 'SQ
 
 export default function AboutPanel() {
   return (
-    <div className="flex flex-col flex-1 animate-fade-slide-up">
+    <div className="flex flex-col flex-1 min-w-0 animate-fade-slide-up">
       <PageHero
         eyebrow="Project Documentation"
         title="About WaveGuard"

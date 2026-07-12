@@ -74,7 +74,7 @@ export default function StatusPanel({ data }) {
   const satHsColor = hs >= 2.5 ? 'text-wg-warn' : hs >= 1.5 ? 'text-wg-watch' : 'text-wg-muted';
 
   return (
-    <div className="flex flex-col flex-1 animate-fade-slide-up">
+    <div className="flex flex-col flex-1 min-w-0 animate-fade-slide-up">
       <PageHero
         eyebrow="Live Monitoring"
         title="System Status"

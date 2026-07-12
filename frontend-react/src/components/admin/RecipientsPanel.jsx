@@ -110,7 +110,7 @@ export default function RecipientsPanel({ showToast }) {
   }, []);
 
   return (
-    <div className="flex flex-col flex-1 animate-fade-slide-up">
+    <div className="flex flex-col flex-1 min-w-0 animate-fade-slide-up">
       <PageHero
         eyebrow="SMS Alert Management"
         title="Alert Recipients"

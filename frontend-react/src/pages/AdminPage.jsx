@@ -125,7 +125,7 @@ export default function AdminPage() {
         onClose={() => setSidebarOpen(false)}
       />
 
-      <div className="md:ml-[220px] flex-1 flex flex-col min-h-screen relative">
+      <div className="md:ml-[220px] flex-1 flex flex-col min-w-0 min-h-screen relative">
         {/* Watermark */}
         <div className="fixed pointer-events-none z-0" style={{
           top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
@@ -164,7 +164,7 @@ export default function AdminPage() {
           )}
         </div>
 
-        <div className="flex-1 flex flex-col relative z-10">
+        <div className="flex-1 flex flex-col min-w-0 relative z-10">
           {activePanel === 'home' && <HomePanel data={data} />}
           {activePanel === 'status' && <StatusPanel data={data} />}
           {activePanel === 'alerts' && <AlertsPanel data={data} />}

@@ -21,7 +21,7 @@ export default function AlertsPanel({ data }) {
   };
 
   return (
-    <div className="flex flex-col flex-1 animate-fade-slide-up">
+    <div className="flex flex-col flex-1 min-w-0 animate-fade-slide-up">
       <PageHero
         eyebrow="Audit Record"
         title="Alerts Log"
