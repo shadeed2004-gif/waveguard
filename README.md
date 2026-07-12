@@ -11,7 +11,7 @@
 
 <p align="center">
   <strong>Mission Control for the Coast.</strong><br>
-  A high-performance, real-time wave monitoring system designed for the Kanayannur coastal zone, Kerala. WaveGuard detects dangerous sea conditions using a cutting-edge fusion of physical buoy telemetry (ESP32) and Open-Meteo satellite data.
+  A high-performance, real-time wave monitoring system designed for the Kothamangalam coastal zone, Kerala. WaveGuard detects dangerous sea conditions using a cutting-edge fusion of physical buoy telemetry (ESP32) and Open-Meteo satellite data.
 </p>
 
 ---

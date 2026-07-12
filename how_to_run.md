@@ -477,4 +477,4 @@ npm run dev
 ---
 
 *WaveGuard – Smart Near-Shore Swell Surge Early Warning System*
-*Kanayannur, Kerala, India · Academic Prototype 2024–25*
+*Kothamangalam, Kerala, India · Academic Prototype 2024–25*
