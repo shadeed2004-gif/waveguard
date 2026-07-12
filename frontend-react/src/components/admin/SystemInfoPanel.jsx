@@ -62,7 +62,7 @@ export default function SystemInfoPanel() {
             <tbody>
               <tr className="hover:bg-wg-blue-xlt">
                 <td className="px-4 py-2.5 font-semibold">WG-01</td>
-                <td className="px-4 py-2.5">Kanayannur Shore Node</td>
+                <td className="px-4 py-2.5">Kothamangalam Shore Node</td>
                 <td className="px-4 py-2.5">9.9312° N, 76.2673° E</td>
                 <td className="px-4 py-2.5">2025-01-15</td>
                 <td className="px-4 py-2.5">Solar + LiPo Battery</td>

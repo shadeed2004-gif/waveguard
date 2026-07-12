@@ -30,7 +30,7 @@ export default function HomePanel({ data }) {
       <PageHero
         eyebrow="Authority Dashboard"
         title="System Overview"
-        subtitle="Kerala Coast – Kanayannur Zone · WG-01 active · Auto-refreshing every 5s"
+        subtitle="Kerala Coast – Kothamangalam Zone · WG-01 active · Auto-refreshing every 5s"
       />
       <div className="px-4 md:px-8 py-7 flex-1">
         {/* KPIs */}
@@ -47,7 +47,7 @@ export default function HomePanel({ data }) {
           <Card title="Station Location Map">
             <div className="bg-gradient-to-br from-sky-200 to-sky-300 rounded-[7px] min-h-[200px] flex flex-col items-center justify-center relative overflow-hidden border border-wg-blue-lt">
               <div className="absolute right-2.5 bottom-[-10px] text-[110px] opacity-[0.07] pointer-events-none">🗺</div>
-              <div className="text-[13px] font-semibold text-wg-blue mb-3">Kerala Coast – Kanayannur Zone</div>
+              <div className="text-[13px] font-semibold text-wg-blue mb-3">Kerala Coast – Kothamangalam Zone</div>
               <div className="flex items-center gap-2 text-[13px] font-medium text-wg-blue">
                 <div className="w-2.5 h-2.5 rounded-full" style={{ background: `var(--color-wg-${fusionStatus.toLowerCase() === 'warning' ? 'warn' : fusionStatus.toLowerCase()})` }} />
                 WG-01 — {fusionCfg.label}
@@ -107,7 +107,7 @@ export default function HomePanel({ data }) {
 
       <div className="bg-navy text-white/30 px-4 md:px-8 py-4 text-[11px] flex items-center justify-between">
         <span>WaveGuard – Admin Dashboard · Visualization Only</span>
-        <span>Kanayannur, Kerala</span>
+        <span>Kothamangalam, Kerala</span>
       </div>
     </div>
   );

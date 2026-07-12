@@ -24,7 +24,7 @@ export default function AboutPanel() {
           <div className="text-[10px] opacity-50 tracking-[1.4px] uppercase mb-2.5">System Overview</div>
           <div className="font-[family-name:var(--font-family-dm-serif)] text-[32px] mb-2">WaveGuard</div>
           <div className="text-[15px] opacity-80 max-w-[560px] leading-relaxed font-light">
-            Smart Near-Shore Swell Surge Early Warning System — An academic-funded IoT prototype for coastal community safety and disaster preparedness in Kanayannur, Kerala.
+            Smart Near-Shore Swell Surge Early Warning System — An academic-funded IoT prototype for coastal community safety and disaster preparedness in Kothamangalam, Kerala.
           </div>
           <div className="mt-4.5 flex gap-2.5 flex-wrap">
             {['Version 1.0.0', 'Academic Prototype 2024–25', 'Visualization Only'].map(tag => (
@@ -36,7 +36,7 @@ export default function AboutPanel() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4.5 mb-5">
           <Card title="Mission Statement" className="mb-0">
             <div className="text-sm leading-relaxed text-wg-muted">
-              WaveGuard is designed to provide early warning of dangerous swell surge conditions to coastal communities, fishermen, and local authorities in the Kanayannur coastal zone of Kerala.
+              WaveGuard is designed to provide early warning of dangerous swell surge conditions to coastal communities, fishermen, and local authorities in the Kothamangalam coastal zone of Kerala.
               <br /><br />
               The website serves purely as a <strong className="text-navy">visualization and monitoring interface</strong>. All alert decisions are made autonomously by the ESP32 hardware based on sensor thresholds. The web platform displays those decisions to authority personnel and the public.
             </div>

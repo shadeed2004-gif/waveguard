@@ -236,7 +236,7 @@ export default function RecipientsPanel({ showToast }) {
             <div className="bg-wg-off rounded-[7px] p-4 border-l-[3px] border-l-wg-watch">
               <div className="text-[10px] font-bold tracking-wider uppercase text-wg-muted-2 mb-1.5">Message Template</div>
               <div className="text-xs text-wg-muted font-mono bg-sky-50 px-2 py-1.5 rounded mt-1">
-                ⚠ WAVEGUARD WARNING: Surge detected at WG-01. Stay away from sea. -Kanayannur Authority
+                ⚠ WAVEGUARD WARNING: Surge detected at WG-01. Stay away from sea. -Kothamangalam Authority
               </div>
             </div>
           </div>
@@ -245,7 +245,7 @@ export default function RecipientsPanel({ showToast }) {
 
       <div className="bg-navy text-white/30 px-4 md:px-8 py-4 text-[11px] flex items-center justify-between">
         <span>WaveGuard – Alert Recipients · Prototype Storage</span>
-        <span>Kanayannur, Kerala</span>
+        <span>Kothamangalam, Kerala</span>
       </div>
 
       {/* Add/Edit Modal */}
