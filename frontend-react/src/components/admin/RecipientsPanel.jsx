@@ -3,12 +3,19 @@ import { PageHero, KpiCard, Card, StatusBadge } from '../ui';
 
 const WG_CONTACTS_KEY = 'wg_contacts';
 
+const DEFAULT_CONTACTS = [
+  { id: 'c001', name: 'Ajmal',   phone: '+91 9876543210', location: 'Kochi Coast', enabled: true },
+  { id: 'c002', name: 'Shadeed', phone: '+91 9123456780', location: 'Alappuzha',   enabled: true },
+  { id: 'c003', name: 'Adil',    phone: '+91 9988776655', location: 'Kollam',       enabled: false },
+  { id: 'c004', name: 'Sinan',   phone: '+91 9090909090', location: 'Kozhikode',   enabled: true },
+];
+
 function loadContacts() {
   try {
     const stored = localStorage.getItem(WG_CONTACTS_KEY);
     if (stored) return JSON.parse(stored);
   } catch {}
-  return [];
+  return DEFAULT_CONTACTS;
 }
 
 function saveContacts(contacts) {
