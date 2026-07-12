@@ -128,8 +128,8 @@ export default function PublicPage() {
 
       {/* Status Banner */}
       <div className={`relative px-6 py-[120px] text-center min-h-[540px] flex flex-col justify-center items-center bg-pub-bg transition-all duration-1000 overflow-hidden ${bannerBg} before:absolute before:w-[600px] before:h-[600px] before:top-[-150px] before:right-[-150px] before:z-[1] before:transition-all before:duration-1000`}>
-        <div className="relative z-10 bg-white/[0.03] backdrop-blur-3xl border border-white/10 px-12 py-16 rounded-[40px] max-w-[800px] w-[90%] shadow-[0_40px_100px_rgba(0,0,0,0.5)] animate-hero-float">
-          <div className="text-xs font-extrabold uppercase tracking-[5px] text-pub-accent mb-8 opacity-80">
+        <div className="relative z-10 bg-white/[0.03] backdrop-blur-3xl border border-white/10 px-5 sm:px-8 md:px-12 py-10 md:py-16 rounded-[40px] max-w-[800px] w-[90%] shadow-[0_40px_100px_rgba(0,0,0,0.5)] animate-hero-float">
+          <div className="text-[10px] md:text-xs font-extrabold uppercase tracking-[2px] md:tracking-[5px] text-pub-accent mb-6 md:mb-8 opacity-80">
             {t('Coastal Safety Monitor', 'തീരദേശ സുരക്ഷാ മുന്നറിയിപ്പ്')}
           </div>
 
@@ -138,10 +138,10 @@ export default function PublicPage() {
             <div className={`absolute -inset-[15px] border-2 ${view.ringBorder} rounded-full animate-pulse-ring opacity-40`} />
           </div>
 
-          <h1 className={`text-[56px] font-extrabold mb-4 leading-[1.1] tracking-[-2px] ${view.titleColor || ''}`}>
+          <h1 className={`text-[36px] md:text-[56px] font-extrabold mb-4 leading-[1.1] tracking-tight md:tracking-[-2px] break-words ${view.titleColor || ''}`}>
             {t(view.titleEn, view.titleMl)}
           </h1>
-          <p className="text-xl opacity-60 max-w-[600px] mx-auto font-normal">
+          <p className="text-base md:text-xl opacity-60 max-w-[600px] mx-auto font-normal">
             {t(view.subEn, view.subMl)}
           </p>
         </div>
