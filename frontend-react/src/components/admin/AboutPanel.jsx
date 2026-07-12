@@ -17,7 +17,7 @@ export default function AboutPanel() {
         title="About WaveGuard"
         subtitle="Project background, team, institution, and funding acknowledgment"
       />
-      <div className="px-8 py-7 flex-1">
+      <div className="px-4 md:px-8 py-7 flex-1">
         {/* Hero Block */}
         <div className="bg-gradient-to-br from-navy-2 to-wg-blue px-8 py-8 text-white rounded-xl mb-5 relative overflow-hidden">
           <div className="absolute right-[-20px] top-1/2 -translate-y-1/2 text-[180px] opacity-[0.04] pointer-events-none leading-none">〰</div>
@@ -33,7 +33,7 @@ export default function AboutPanel() {
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4.5 mb-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4.5 mb-5">
           <Card title="Mission Statement" className="mb-0">
             <div className="text-sm leading-relaxed text-wg-muted">
               WaveGuard is designed to provide early warning of dangerous swell surge conditions to coastal communities, fishermen, and local authorities in the Kanayannur coastal zone of Kerala.
@@ -54,7 +54,7 @@ export default function AboutPanel() {
           </Card>
         </div>
 
-        <div className="grid grid-cols-2 gap-4.5">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4.5">
           <Card title="Technology Stack" className="mb-0">
             <div className="flex flex-wrap gap-2 mt-2.5">
               {TECH_CHIPS.map(c => (
@@ -76,7 +76,7 @@ export default function AboutPanel() {
         </div>
       </div>
 
-      <div className="bg-navy text-white/30 px-8 py-4 text-[11px] flex items-center justify-between">
+      <div className="bg-navy text-white/30 px-4 md:px-8 py-4 text-[11px] flex items-center justify-between">
         <span>WaveGuard – Smart Near-Shore Swell Surge Early Warning System · Visualization Only</span>
         <span>Kothamangalam, Kerala</span>
       </div>

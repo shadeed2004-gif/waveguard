@@ -80,7 +80,7 @@ export default function StatusPanel({ data }) {
         title="System Status"
         subtitle="WG-01 real-time readings · Auto-refreshed every 5 seconds · Read-only"
       />
-      <div className="px-8 py-7 flex-1">
+      <div className="px-4 md:px-8 py-7 flex-1">
         {/* Buoy offline banner */}
         {!buoyOnline && (
           <div className="flex items-center gap-3 bg-amber-50 border-[1.5px] border-amber-300 rounded-[10px] px-4.5 py-3.5 mb-5 text-amber-800 text-[13px] font-semibold">
@@ -96,7 +96,7 @@ export default function StatusPanel({ data }) {
           Live Station Readings
         </div>
 
-        <div className="grid grid-cols-2 gap-4.5 mb-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4.5 mb-5">
           {/* Buoy Panel */}
           <div className="bg-white rounded-xl border border-wg-border shadow-sm overflow-hidden">
             <div className="px-4.5 py-3.5 flex items-center justify-between border-b border-wg-border bg-wg-blue-xlt">

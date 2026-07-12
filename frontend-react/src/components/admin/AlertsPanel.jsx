@@ -27,8 +27,8 @@ export default function AlertsPanel({ data }) {
         title="Alerts Log"
         subtitle="Chronological record of all status transitions · Immutable audit log"
       />
-      <div className="px-8 py-7 flex-1">
-        <div className="grid grid-cols-4 gap-3.5 mb-5">
+      <div className="px-4 md:px-8 py-7 flex-1">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
           <KpiCard label="Total Events" value={analytics.total_readings || '--'} sub="Last 30 days" accent="blue" delay={50} />
           <KpiCard label="WARNING Events" value={<span className="text-wg-warn">{analytics.warning_count ?? '--'}</span>} sub="Last 30 days" accent="warn" delay={100} />
           <KpiCard label="WATCH Events" value={<span className="text-wg-watch">{analytics.watch_count ?? '--'}</span>} sub="Last 30 days" accent="watch" delay={150} />
@@ -55,7 +55,8 @@ export default function AlertsPanel({ data }) {
           className="mb-0"
           bodyClassName="p-0"
         >
-          <table className="w-full border-collapse text-[13px]">
+          <div className="overflow-x-auto">
+          <table className="w-full border-collapse text-[13px] min-w-[540px]">
             <thead>
               <tr>
                 {['#', 'Timestamp', 'Station', 'From', 'To', 'Wave Height', 'Duration'].map(h => (
@@ -85,6 +86,7 @@ export default function AlertsPanel({ data }) {
               )}
             </tbody>
           </table>
+          </div>
           <div className="flex items-center justify-between px-5 py-3 border-t border-wg-border text-xs text-wg-muted-2">
             <span>Showing {Math.min(history.length, 15)} of {history.length} records</span>
             <div className="flex gap-1.5">
@@ -95,7 +97,7 @@ export default function AlertsPanel({ data }) {
         </Card>
       </div>
 
-      <div className="bg-navy text-white/30 px-8 py-4 text-[11px]">WaveGuard – Visualization Only · Immutable Audit Log</div>
+      <div className="bg-navy text-white/30 px-4 md:px-8 py-4 text-[11px]">WaveGuard – Visualization Only · Immutable Audit Log</div>
     </div>
   );
 }

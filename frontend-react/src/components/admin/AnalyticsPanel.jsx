@@ -61,7 +61,7 @@ export default function AnalyticsPanel({ data }) {
         title="Analytics"
         subtitle="Past sensor readings only · No predictions · No ML output"
       />
-      <div className="px-8 py-7 flex-1">
+      <div className="px-4 md:px-8 py-7 flex-1">
         {/* Time Range */}
         <div className="flex gap-2 items-center flex-wrap mb-5">
           <span className="text-xs text-wg-muted font-semibold">Time Range:</span>
@@ -77,7 +77,7 @@ export default function AnalyticsPanel({ data }) {
         </div>
 
         {/* KPIs */}
-        <div className="grid grid-cols-4 gap-3.5 mb-5">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
           <KpiCard label="Peak Motion Index" value={analytics.peak_motion ?? '--'} sub="From last 50 buoy readings" accent="blue" delay={50} />
           <KpiCard label="Avg Motion Index" value={analytics.avg_motion ?? '--'} sub="From last 50 buoy readings" accent="blue" delay={100} />
           <KpiCard label="WARNING Readings" value={<span className="text-wg-warn">{analytics.warning_count ?? '--'}</span>} sub="In last 50 readings" accent="warn" delay={150} />
@@ -85,7 +85,7 @@ export default function AnalyticsPanel({ data }) {
         </div>
 
         {/* Charts */}
-        <div className="grid grid-cols-2 gap-4.5 mb-5">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4.5 mb-5">
           <Card title="Buoy Motion Index — Real-time History (last 50 readings)" className="mb-0" bodyClassName="pb-3">
             <svg viewBox="0 0 480 110" preserveAspectRatio="none" className="w-full h-[110px]">
               <defs>
@@ -150,7 +150,7 @@ export default function AnalyticsPanel({ data }) {
         </Card>
       </div>
 
-      <div className="bg-navy text-white/30 px-8 py-4 text-[11px]">WaveGuard – Historical Data Only · No Predictions · No ML Output</div>
+      <div className="bg-navy text-white/30 px-4 md:px-8 py-4 text-[11px]">WaveGuard – Historical Data Only · No Predictions · No ML Output</div>
     </div>
   );
 }

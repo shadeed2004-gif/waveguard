@@ -116,7 +116,7 @@ export default function RecipientsPanel({ showToast }) {
         title="Alert Recipients"
         subtitle="Manage contacts who receive SMS warnings when a surge is triggered · Prototype mode"
       />
-      <div className="px-8 py-7 flex-1">
+      <div className="px-4 md:px-8 py-7 flex-1">
         {/* Info Note */}
         <div className="flex items-start gap-3 px-4.5 py-3.5 bg-wg-blue-xlt border border-wg-blue-lt rounded-[7px] text-xs text-wg-muted leading-relaxed mb-5">
           <span className="text-lg shrink-0 mt-0.5">📡</span>
@@ -129,7 +129,7 @@ export default function RecipientsPanel({ showToast }) {
         </div>
 
         {/* KPIs */}
-        <div className="grid grid-cols-4 gap-3.5 mb-5">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-5">
           <KpiCard label="Total Contacts" value={contacts.length} sub="In recipients list" accent="blue" delay={50} />
           <KpiCard label="Enabled" value={<span className="text-wg-normal">{enabled}</span>} sub="Will receive SMS alerts" accent="normal" delay={100} />
           <KpiCard label="Disabled" value={<span className="text-wg-muted-2">{disabled}</span>} sub="Paused, won't receive SMS" accent="blue" delay={150} />
@@ -178,7 +178,8 @@ export default function RecipientsPanel({ showToast }) {
           className="mb-5"
           bodyClassName="p-0"
         >
-          <table className="w-full border-collapse text-[13px]">
+          <div className="overflow-x-auto">
+          <table className="w-full border-collapse text-[13px] min-w-[540px]">
             <thead>
               <tr>
                 {['Name', 'Phone Number', 'Location', 'Status', 'Actions'].map(h => (
@@ -218,6 +219,7 @@ export default function RecipientsPanel({ showToast }) {
               ))}
             </tbody>
           </table>
+          </div>
         </Card>
 
         {/* SMS Logic Reference */}
@@ -241,7 +243,7 @@ export default function RecipientsPanel({ showToast }) {
         </Card>
       </div>
 
-      <div className="bg-navy text-white/30 px-8 py-4 text-[11px] flex items-center justify-between">
+      <div className="bg-navy text-white/30 px-4 md:px-8 py-4 text-[11px] flex items-center justify-between">
         <span>WaveGuard – Alert Recipients · Prototype Storage</span>
         <span>Kanayannur, Kerala</span>
       </div>

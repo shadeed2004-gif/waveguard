@@ -26,6 +26,7 @@ const PANELS = [
 export default function AdminPage() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [activePanel, setActivePanel] = useState('home');
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const [mode, setMode] = useState('live');
   const [data, setData] = useState(null);
   const [backendOnline, setBackendOnline] = useState(null);
@@ -120,12 +121,14 @@ export default function AdminPage() {
         onNavigate={setActivePanel}
         fusionStatus={fusionStatus}
         onLogout={handleLogout}
+        isOpen={sidebarOpen}
+        onClose={() => setSidebarOpen(false)}
       />
 
-      <div className="ml-[220px] flex-1 flex flex-col min-h-screen relative">
+      <div className="md:ml-[220px] flex-1 flex flex-col min-h-screen relative">
         {/* Watermark */}
         <div className="fixed pointer-events-none z-0" style={{
-          top: '50%', left: 'calc(220px + (100% - 220px) / 2)', transform: 'translate(-50%, -50%)',
+          top: '50%', left: '50%', transform: 'translate(-50%, -50%)',
           width: '85%', height: '85%',
         }}>
           <img src="/assets/shield_logo_light.png" alt="" className="w-full h-full object-contain opacity-[0.05]" />
@@ -137,6 +140,7 @@ export default function AdminPage() {
           backendOnline={backendOnline}
           lastSuccessTime={lastSuccessTime}
           username={sessionStorage.getItem('wg_user') || 'Admin'}
+          onMenuOpen={() => setSidebarOpen(true)}
         />
 
         {/* Historical Mode Toggle */}
