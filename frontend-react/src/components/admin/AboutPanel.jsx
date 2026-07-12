@@ -1,13 +1,13 @@
 import { PageHero, Card } from '../ui';
 
 const TEAM = [
-  { role: 'Project Lead', name: '[Name]' },
-  { role: 'Hardware Engineer', name: '[Name]' },
-  { role: 'Software Developer', name: '[Name]' },
-  { role: 'Faculty Advisor', name: '[Prof. Name]' },
+  { role: 'Project Lead', name: 'MUHAMMED AJMAL P' },
+  { role: 'Hardware Engineer', name: 'MUHAMMED AJMAL P, SINAN RAHMAN MP' },
+  { role: 'Software Developer', name: 'MOHAMMED SHADEED P, MUHAMMED ADIL PP' },
+  { role: 'Faculty Adviser', name: 'PROF. ELDO P ELIAS' },
 ];
 
-const TECH_CHIPS = ['ESP32', 'MPU-6050', 'NEO-6M GPS', 'FastAPI', 'SQLite', 'SQLAlchemy', 'React + Tailwind', 'WiFi 802.11'];
+const TECH_CHIPS = ['ESP32', 'MPU-6050', 'NEO-6M GPS', 'Firebase', 'SQLite', 'SQLAlchemy', 'React + Tailwind', 'WiFi 802.11'];
 
 export default function AboutPanel() {
   return (
@@ -65,12 +65,12 @@ export default function AboutPanel() {
 
           <Card title="Institution & Funding" className="mb-0">
             <div className="text-[13px] leading-[2] text-wg-muted">
-              <div><strong className="text-navy">Institution:</strong> [College / University Name]</div>
-              <div><strong className="text-navy">Department:</strong> Electronics & Communication Engineering</div>
-              <div><strong className="text-navy">Funding Body:</strong> [Grant / Sponsor Name]</div>
+              <div><strong className="text-navy">Institution:</strong> MACE KOTHAMANGALAM</div>
+              <div><strong className="text-navy">Department:</strong> COMPUTER SCIENCE AND ENGINEERING</div>
+              <div><strong className="text-navy">Funding Body:</strong> ALUMINI</div>
               <div><strong className="text-navy">Project Type:</strong> Academic Funded Prototype</div>
               <div><strong className="text-navy">Academic Year:</strong> 2024–25</div>
-              <div className="mt-2.5"><strong className="text-navy">Location:</strong> Kanayannur, Kerala, India</div>
+              <div><strong className="text-navy">Location:</strong> KOTHAMANGALAM, KERALA, INDIA</div>
             </div>
           </Card>
         </div>
@@ -78,7 +78,7 @@ export default function AboutPanel() {
 
       <div className="bg-navy text-white/30 px-8 py-4 text-[11px] flex items-center justify-between">
         <span>WaveGuard – Smart Near-Shore Swell Surge Early Warning System · Visualization Only</span>
-        <span>Kanayannur, Kerala</span>
+        <span>Kothamangalam, Kerala</span>
       </div>
     </div>
   );
